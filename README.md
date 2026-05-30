@@ -211,7 +211,7 @@ Before deploying publicly:
 - CI pipeline for model validation + API tests
 
 ## License
-No license file is currently included. Add a license before open-source distribution (MIT is a common default).
+MIT is a common default
 
 ---
 
