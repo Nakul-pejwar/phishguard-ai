@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PhishGuard AI</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Neural Network Canvas Background -->
+  <canvas id="neuralCanvas"></canvas>
+
+  <!-- Scan Line Effect -->
+  <div class="scan-line"></div>
+
+  <main class="popup">
+    <!-- Header -->
+    <section class="header">
+      <div class="logo">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#0077ff;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <path d="M24 4L8 12V22C8 33.05 15.28 43.22 24 46C32.72 43.22 40 33.05 40 22V12L24 4Z" 
+                stroke="url(#shieldGrad)" stroke-width="2.5" fill="none" class="shield-path"/>
+          <path d="M16 24L21 29L32 18" stroke="#00d4ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" 
+                class="check-path"/>
+          <circle cx="24" cy="14" r="2" fill="#00d4ff" class="node-pulse"/>
+          <circle cx="14" cy="22" r="1.5" fill="#0077ff" opacity="0.7"/>
+          <circle cx="34" cy="22" r="1.5" fill="#0077ff" opacity="0.7"/>
+          <circle cx="18" cy="34" r="1.5" fill="#0077ff" opacity="0.5"/>
+          <circle cx="30" cy="34" r="1.5" fill="#0077ff" opacity="0.5"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1>PhishGuard <span class="ai-badge">AI</span></h1>
+        <p class="subtitle">
+          <span class="typing-text">Neural Threat Detection</span>
+          <span class="cursor-blink">|</span>
+        </p>
+      </div>
+    </section>
+
+    <!-- Neural Divider -->
+    <div class="neural-divider">
+      <span class="node"></span>
+      <span class="line"></span>
+      <span class="node active"></span>
+      <span class="line"></span>
+      <span class="node"></span>
+    </div>
+
+    <!-- URL Box -->
+    <section class="url-box">
+      <div class="url-label">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <circle cx="6" cy="6" r="2.5" stroke="#00d4ff" stroke-width="1"/>
+          <path d="M6 1V2.5M6 9.5V11M1 6H2.5M9.5 6H11" stroke="#00d4ff" stroke-width="1" stroke-linecap="round"/>
+        </svg>
+        <span>TARGET URL</span>
+      </div>
+      <p id="currentUrl" class="url">Loading...</p>
+      <div class="url-glow"></div>
+    </section>
+
+    <!-- Scan Button -->
+    <button id="scanBtn" class="scan-btn">
+      <span class="btn-text">INITIATE SCAN</span>
+      <span class="btn-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 1C4.13 1 1 4.13 1 8s3.13 7 7 7 7-3.13 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M8 4v4l3 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="8" cy="8" r="1" fill="currentColor"/>
+        </svg>
+      </span>
+      <div class="btn-glow"></div>
+      <div class="btn-particles"></div>
+    </button>
+
+    <!-- Result Card -->
+    <section id="resultCard" class="result-card hidden">
+      <!-- Status Header -->
+      <div class="status-header">
+        <div id="statusIcon" class="status-icon">
+          <svg viewBox="0 0 48 48" fill="none" class="status-svg">
+            <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+            <circle cx="24" cy="24" r="12" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3" class="status-ring"/>
+            <circle cx="24" cy="24" r="4" fill="currentColor" class="status-core"/>
+          </svg>
+        </div>
+        <h2 id="verdictText" class="verdict">Result</h2>
+        <p id="riskText" class="risk-level">Risk level</p>
+      </div>
+
+      <!-- Neural Divider -->
+      <div class="neural-divider small">
+        <span class="node"></span>
+        <span class="line"></span>
+        <span class="node active"></span>
+        <span class="line"></span>
+        <span class="node"></span>
+      </div>
+
+      <!-- Score Meter -->
+      <div class="score-wrap">
+        <div class="score-top">
+          <span class="score-label">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M5 1L6 4H9L6.5 6L7.5 9L5 7.2L2.5 9L3.5 6L1 4H4L5 1Z" fill="#00d4ff" opacity="0.7"/>
+            </svg>
+            THREAT PROBABILITY
+          </span>
+          <strong id="scoreText" class="score-value">0%</strong>
+        </div>
+        <div class="bar-container">
+          <div class="bar">
+            <div id="scoreBar" class="bar-fill"></div>
+          </div>
+          <div class="bar-glow"></div>
+          <!-- Neural nodes along bar -->
+          <div class="bar-nodes">
+            <span class="bnode" style="left:0%"></span>
+            <span class="bnode" style="left:25%"></span>
+            <span class="bnode" style="left:50%"></span>
+            <span class="bnode" style="left:75%"></span>
+            <span class="bnode" style="left:100%"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Neural Divider -->
+      <div class="neural-divider small">
+        <span class="node"></span>
+        <span class="line"></span>
+        <span class="node active"></span>
+        <span class="line"></span>
+        <span class="node"></span>
+      </div>
+
+      <!-- Details -->
+      <div class="details">
+        <div class="detail-row">
+          <span class="detail-label">
+            <span class="label-icon">&#9670;</span> DOMAIN
+          </span>
+          <span id="domainText" class="detail-value">-</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">
+            <span class="label-icon">&#9670;</span> RAW ML SCORE
+          </span>
+          <span id="rawScoreText" class="detail-value">-</span>
+        </div>
+      </div>
+
+      <!-- Reasons -->
+      <div id="reasonsBox" class="reasons"></div>
+    </section>
+
+    <!-- Error -->
+    <p id="errorText" class="error hidden">
+      <span class="error-icon">&#9888;</span>
+      <span id="errorMsg"></span>
+    </p>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-nodes">
+        <span class="fnode"></span>
+        <span class="fnode"></span>
+        <span class="fnode active"></span>
+        <span class="fnode"></span>
+        <span class="fnode"></span>
+      </div>
+      <p>Powered by Neural Network Analysis</p>
+    </div>
+  </main>
+
+  <script src="popup.js"></script>
+</body>
+</html>

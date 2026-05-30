@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+phishing_ml/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+media/
+staticfiles/
+
+# Environment variables / secrets
+.env
+.env.*
+*.env
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ML dataset and large files
+phishing_model/dataset/
+*.csv
+
+# Model files - choose carefully
+# If model is small and needed for demo, you can allow only final model below.
+*.joblib
+!phishing_backend/scanner/ml/phishing_url_text_model_v2.joblib
+
+# Browser extension temp files
+*.zip
+*.crx
