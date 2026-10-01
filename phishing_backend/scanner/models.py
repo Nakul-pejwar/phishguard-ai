@@ -1,5 +1,9 @@
 from django.db import models
 
+from .intel.models import ThreatFeedEntry
+
+__all__ = ["URLScanResult", "ThreatFeedEntry"]
+
 
 class URLScanResult(models.Model):
     input_url = models.URLField(max_length=2048)

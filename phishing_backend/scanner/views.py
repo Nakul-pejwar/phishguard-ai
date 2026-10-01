@@ -15,7 +15,7 @@ from rest_framework.decorators import (
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from .ml.predictor import ModelManager, predict_phishing_url
+from .ml.predictor import ModelManager
 from .models import URLScanResult
 
 
@@ -67,7 +67,9 @@ def check_url_api(request):
         )
 
     try:
-        result = predict_phishing_url(url)
+        from .orchestrator import DetectionOrchestrator
+
+        result = DetectionOrchestrator.analyze(url)
         clean_url = result["clean_url"]
         domain = result["domain"]
         url_hash = hashlib.sha256(clean_url.encode("utf-8")).hexdigest()
