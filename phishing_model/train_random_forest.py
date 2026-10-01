@@ -1,9 +1,8 @@
-import pandas as pd
 import joblib
-
-from sklearn.model_selection import train_test_split
+import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, roc_auc_score
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_auc_score
+from sklearn.model_selection import train_test_split
 
 df = pd.read_csv("dataset/PhiUSIIL_Phishing_URL_Dataset.csv")
 

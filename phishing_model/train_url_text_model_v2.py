@@ -1,17 +1,17 @@
-import pandas as pd
-import joblib
 from urllib.parse import urlparse, urlunparse
 
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
+import joblib
+import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
-    confusion_matrix,
     classification_report,
+    confusion_matrix,
     roc_auc_score,
 )
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
 
 DATASET_PATH = "dataset/PhiUSIIL_Phishing_URL_Dataset.csv"
 MODEL_PATH = "models/phishing_url_text_model_v2.joblib"

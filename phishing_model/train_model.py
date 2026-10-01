@@ -1,16 +1,15 @@
-import pandas as pd
 import joblib
-
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
-    confusion_matrix,
     classification_report,
+    confusion_matrix,
     roc_auc_score,
 )
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 DATASET_PATH = "dataset/PhiUSIIL_Phishing_URL_Dataset.csv"
 MODEL_PATH = "models/phishing_url_model.joblib"

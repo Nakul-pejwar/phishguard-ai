@@ -1,5 +1,6 @@
-import joblib
 from urllib.parse import urlparse, urlunparse
+
+import joblib
 
 MODEL_PATH = "models/phishing_url_text_model_v2.joblib"
 

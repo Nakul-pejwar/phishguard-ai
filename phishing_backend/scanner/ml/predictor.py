@@ -1,19 +1,11 @@
+import logging
 import os
-import joblib
 from urllib.parse import urlparse, urlunparse
+
+import joblib
 from django.conf import settings
 
-
-MODEL_PATH = os.path.join(
-    settings.BASE_DIR,
-    "scanner",
-    "ml",
-    "phishing_url_text_model_v2.joblib",
-)
-
-saved_data = joblib.load(MODEL_PATH)
-model = saved_data["model"]
-
+logger = logging.getLogger(__name__)
 
 TRUSTED_DOMAINS = {
     "google.com",
@@ -34,7 +26,6 @@ TRUSTED_DOMAINS = {
     "reddit.com",
 }
 
-
 SENSITIVE_KEYWORDS = {
     "login",
     "verify",
@@ -49,6 +40,52 @@ SENSITIVE_KEYWORDS = {
     "otp",
     "kyc",
 }
+
+
+class ModelManager:
+    _instance = None
+
+    def __init__(self):
+        self.model = None
+        self.is_loaded = False
+        self.load_error = None
+        self.model_path = getattr(
+            settings,
+            "PHISHING_MODEL_PATH",
+            os.path.join(settings.BASE_DIR, "scanner", "ml", "phishing_url_text_model_v2.joblib"),
+        )
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
+    def load_model(self, custom_path=None):
+        path_to_load = custom_path or self.model_path
+        if not os.path.exists(path_to_load):
+            self.is_loaded = False
+            self.model = None
+            self.load_error = f"Model file not found at {path_to_load}"
+            logger.warning(
+                "PhishGuard Warning: %s. Application will run in heuristic fallback mode.",
+                self.load_error,
+            )
+            return False
+
+        try:
+            saved_data = joblib.load(path_to_load)
+            self.model = saved_data.get("model", saved_data)
+            self.is_loaded = True
+            self.load_error = None
+            logger.info("Successfully loaded PhishGuard ML model from %s", path_to_load)
+            return True
+        except Exception as exc:
+            self.is_loaded = False
+            self.model = None
+            self.load_error = f"Failed to load model from {path_to_load}: {exc}"
+            logger.error("PhishGuard Error: %s", self.load_error)
+            return False
 
 
 def normalize_url(url: str) -> str:
@@ -97,12 +134,22 @@ def predict_phishing_url(url: str) -> dict:
     clean_url = normalize_url(url)
     domain = get_domain(clean_url)
 
-    prob_legitimate = model.predict_proba([clean_url])[0][1]
-    prob_phishing = 1 - prob_legitimate
+    manager = ModelManager.get_instance()
+    if not manager.is_loaded:
+        manager.load_model()
 
-    raw_phishing_probability = prob_phishing * 100
-    adjusted_phishing_probability = raw_phishing_probability
     reasons = []
+
+    if manager.is_loaded and manager.model is not None:
+        prob_legitimate = manager.model.predict_proba([clean_url])[0][1]
+        prob_phishing = 1 - prob_legitimate
+        raw_phishing_probability = prob_phishing * 100
+    else:
+        # Graceful fallback baseline when model is not present
+        raw_phishing_probability = 40.0
+        reasons.append("ML model unavailable; operating in heuristic fallback mode.")
+
+    adjusted_phishing_probability = raw_phishing_probability
 
     if is_trusted_domain(domain):
         adjusted_phishing_probability = min(adjusted_phishing_probability, 20)
@@ -116,8 +163,8 @@ def predict_phishing_url(url: str) -> dict:
         adjusted_phishing_probability += 10
         reasons.append("Sensitive keyword found in URL.")
 
-    adjusted_phishing_probability = max(0, min(100, adjusted_phishing_probability))
-    adjusted_legitimate_probability = 100 - adjusted_phishing_probability
+    adjusted_phishing_probability = max(0.0, min(100.0, adjusted_phishing_probability))
+    adjusted_legitimate_probability = 100.0 - adjusted_phishing_probability
 
     if adjusted_phishing_probability >= 85:
         verdict = "phishing"

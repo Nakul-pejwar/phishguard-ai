@@ -1,14 +1,13 @@
-import pandas as pd
 import joblib
-
-from sklearn.model_selection import train_test_split
+import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score,
-    confusion_matrix,
     classification_report,
+    confusion_matrix,
     roc_auc_score,
 )
+from sklearn.model_selection import train_test_split
 
 DATASET_PATH = "dataset/PhiUSIIL_Phishing_URL_Dataset.csv"
 MODEL_PATH = "models/phishing_simple_url_model.joblib"
