@@ -5,8 +5,10 @@ Django==5.2.14
 django-cors-headers==4.9.0
 djangorestframework==3.17.1
 djangorestframework-simplejwt>=5.3.0
+dj-database-url>=2.1.0
 dotenv==0.9.9
 fonttools==4.63.0
+gunicorn>=22.0.0
 joblib==1.6.0
 kiwisolver==1.5.0
 matplotlib==3.10.9
@@ -14,14 +16,18 @@ numpy==2.5.3
 packaging==26.0
 pandas==3.0.3
 pillow==12.2.0
+psycopg2-binary>=2.9.9
 pyparsing==3.3.2
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
+redis>=5.0.0
+celery>=5.3.0
 scikit-learn==1.9.1
 scipy==1.18.1
 six==1.17.0
 sqlparse==0.5.5
 threadpoolctl==3.7.0
+whitenoise>=6.6.0
 
 # Dev, Test & Quality Tooling
 pytest>=8.0.0

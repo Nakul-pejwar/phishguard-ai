@@ -3,6 +3,8 @@ import hashlib
 from accounts.authentication import PhishGuardDualAuthentication
 from accounts.models import UsageLog
 from accounts.throttles import PlanBasedRateThrottle
+from django.db import connection
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import (
     api_view,
@@ -13,8 +15,39 @@ from rest_framework.decorators import (
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from .ml.predictor import predict_phishing_url
+from .ml.predictor import ModelManager, predict_phishing_url
 from .models import URLScanResult
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def health_check_api(request):
+    """
+    Health check endpoint for container orchestrators and monitoring probes.
+    Verifies DB connection and ML model readiness.
+    """
+    db_status = "connected"
+    try:
+        connection.ensure_connection()
+    except Exception as exc:
+        db_status = f"unhealthy: {exc}"
+
+    model_manager = ModelManager.get_instance()
+    model_loaded = model_manager.is_loaded
+
+    is_healthy = db_status == "connected"
+    status_code = status.HTTP_200_OK if is_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+
+    return Response(
+        {
+            "status": "healthy" if is_healthy else "degraded",
+            "database": db_status,
+            "model_loaded": model_loaded,
+            "version": "1.0.0",
+            "timestamp": timezone.now().isoformat(),
+        },
+        status=status_code,
+    )
 
 
 @api_view(["POST"])

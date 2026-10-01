@@ -1,0 +1,14 @@
+.git
+.gitignore
+.env
+.pytest_cache
+.coverage
+htmlcov/
+*.pyc
+__pycache__/
+.venv
+venv/
+node_modules/
+browser_extension/
+phishing_model/dataset/
+*.sqlite3

@@ -1,0 +1,106 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-phishguard}
+      POSTGRES_USER: ${POSTGRES_USER:-phishguard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-phishguard_secret_pw}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-phishguard}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DJANGO_ENV: prod
+      SECRET_KEY: ${SECRET_KEY:-insecure-prod-key-change-me}
+      DEBUG: "False"
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-api.phishguard.ai,localhost,127.0.0.1}
+      DATABASE_URL: postgres://${POSTGRES_USER:-phishguard}:${POSTGRES_PASSWORD:-phishguard_secret_pw}@db:5432/${POSTGRES_DB:-phishguard}
+      REDIS_URL: redis://redis:6379/0
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://app.phishguard.ai}
+      SECURE_SSL_REDIRECT: ${SECURE_SSL_REDIRECT:-False}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A phishing_backend worker -l info -c 2
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DJANGO_ENV: prod
+      SECRET_KEY: ${SECRET_KEY:-insecure-prod-key-change-me}
+      DATABASE_URL: postgres://${POSTGRES_USER:-phishguard}:${POSTGRES_PASSWORD:-phishguard_secret_pw}@db:5432/${POSTGRES_DB:-phishguard}
+      REDIS_URL: redis://redis:6379/0
+
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A phishing_backend beat -l info
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      DJANGO_ENV: prod
+      SECRET_KEY: ${SECRET_KEY:-insecure-prod-key-change-me}
+      DATABASE_URL: postgres://${POSTGRES_USER:-phishguard}:${POSTGRES_PASSWORD:-phishguard_secret_pw}@db:5432/${POSTGRES_DB:-phishguard}
+      REDIS_URL: redis://redis:6379/0
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      web:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:
+  caddy_config:
