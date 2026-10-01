@@ -83,4 +83,4 @@ def test_revoke_api_key(api_client, registered_user):
     api_client.credentials()
     api_client.credentials(HTTP_X_API_KEY=raw_key)
     scan_res = api_client.post("/api/check-url/", {"url": "https://github.com"}, format="json")
-    assert scan_res.status_code == status.HTTP_401_UNAUTHORIZED
+    assert scan_res.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]

@@ -39,10 +39,15 @@ def check_url_api(request):
         domain = result["domain"]
         url_hash = hashlib.sha256(clean_url.encode("utf-8")).hexdigest()
 
-        # Resolve organization & user
+        # Resolve organization & real User instance for ForeignKey
         organization = getattr(request, "organization", None)
-        user = request.user if request.user and request.user.is_authenticated else None
-        user_instance = user if (user and hasattr(user, "id") and user.id) else None
+        user_instance = None
+        if request.user and request.user.is_authenticated:
+            from django.contrib.auth.models import User
+            if isinstance(request.user, User):
+                user_instance = request.user
+            elif hasattr(request.user, "owner_user") and isinstance(request.user.owner_user, User):
+                user_instance = request.user.owner_user
 
         # 1. Privacy-compliant usage log (stores domain + SHA-256 hash)
         UsageLog.objects.create(
