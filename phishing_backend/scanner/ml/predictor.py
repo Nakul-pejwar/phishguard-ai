@@ -1,7 +1,6 @@
 import logging
 import os
 from urllib.parse import urlparse, urlunparse
-
 import joblib
 from django.conf import settings
 
@@ -49,6 +48,7 @@ class ModelManager:
         self.model = None
         self.is_loaded = False
         self.load_error = None
+        self._load_attempted = False
         self.model_path = getattr(
             settings,
             "PHISHING_MODEL_PATH",
@@ -63,6 +63,7 @@ class ModelManager:
 
     def load_model(self, custom_path=None):
         path_to_load = custom_path or self.model_path
+        self._load_attempted = True
         if not os.path.exists(path_to_load):
             self.is_loaded = False
             self.model = None
@@ -135,7 +136,7 @@ def predict_phishing_url(url: str) -> dict:
     domain = get_domain(clean_url)
 
     manager = ModelManager.get_instance()
-    if not manager.is_loaded:
+    if not manager.is_loaded and not manager._load_attempted:
         manager.load_model()
 
     reasons = []
