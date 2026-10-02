@@ -60,9 +60,14 @@ EOL
   echo "[+] .env generated successfully."
 fi
 
-# 5. Build Distribution Packages for Direct Download
-echo "[+] Packaging Chrome & Firefox browser extensions..."
-python3 scripts/package_extension.py 2>/dev/null || python scripts/package_extension.py 2>/dev/null || echo "[!] Extension zip packaging skipped (packages will use existing dist/ files)."
+# 5. Build Distribution Packages for Direct Download (Pre-configured with VPS Backend URL)
+echo "[+] Packaging Chrome & Firefox browser extensions configured for ${USER_DOMAIN}..."
+PROTOCOL="https"
+if [[ "${USER_DOMAIN}" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || [ "${USER_DOMAIN}" = "localhost" ]; then
+  PROTOCOL="http"
+fi
+python3 scripts/package_extension.py --api-url "${PROTOCOL}://${USER_DOMAIN}" 2>/dev/null || python scripts/package_extension.py --api-url "${PROTOCOL}://${USER_DOMAIN}" 2>/dev/null || echo "[!] Extension zip packaging skipped (packages will use existing dist/ files)."
+
 
 # 6. Build and Launch Containers
 echo "[+] Starting PhishGuard production container stack..."

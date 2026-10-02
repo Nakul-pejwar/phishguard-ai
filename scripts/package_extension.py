@@ -64,7 +64,7 @@ def validate_manifest(manifest_path: Path, is_firefox: bool = False) -> dict:
     return data
 
 
-def build_package(target_name: str, manifest_filename: str, is_firefox: bool = False):
+def build_package(target_name: str, manifest_filename: str, is_firefox: bool = False, api_url: str = None):
     manifest_path = EXTENSION_DIR / manifest_filename
     manifest_data = validate_manifest(manifest_path, is_firefox=is_firefox)
     version = manifest_data.get("version", "2.0.0")
@@ -90,26 +90,59 @@ def build_package(target_name: str, manifest_filename: str, is_firefox: bool = F
                 if file in ["manifest.json", "manifest_firefox.json"]:
                     continue
 
-                zipf.write(full_path, arcname=rel_path)
+                # If a custom API URL is configured (e.g. on VPS deployment), inject it
+                if api_url and file == "background.js":
+                    content = full_path.read_text(encoding="utf-8")
+                    modified = content.replace(
+                        'const DEFAULT_API_BASE = "http://127.0.0.1:8000";',
+                        f'const DEFAULT_API_BASE = "{api_url.rstrip("/")}";'
+                    )
+                    zipf.writestr(str(rel_path), modified)
+                elif api_url and file == "popup.html":
+                    content = full_path.read_text(encoding="utf-8")
+                    modified = content.replace(
+                        'value="http://127.0.0.1:8000"',
+                        f'value="{api_url.rstrip("/")}"'
+                    )
+                    zipf.writestr(str(rel_path), modified)
+                else:
+                    zipf.write(full_path, arcname=rel_path)
 
         # Write the specific manifest as 'manifest.json' inside the archive root
-        zipf.write(manifest_path, arcname="manifest.json")
+        if api_url:
+            m_content = manifest_path.read_text(encoding="utf-8")
+            m_data = json.loads(m_content)
+            host_perms = m_data.get("host_permissions", [])
+            backend_perm = f"{api_url.rstrip('/')}/*"
+            if backend_perm not in host_perms and "<all_urls>" not in host_perms:
+                host_perms.append(backend_perm)
+                m_data["host_permissions"] = host_perms
+            zipf.writestr("manifest.json", json.dumps(m_data, indent=2))
+        else:
+            zipf.write(manifest_path, arcname="manifest.json")
 
     print(f"[+] Built {target_name.upper()} package: {zip_filename.name} ({zip_filename.stat().st_size / 1024:.2f} KB)")
     return zip_filename
 
 
-def package_all():
+def package_all(api_url: str = None):
     DIST_DIR.mkdir(parents=True, exist_ok=True)
+    
+    # Read API URL from env or argument if provided
+    if not api_url:
+        api_url = os.environ.get("PHISHGUARD_API_URL") or os.environ.get("API_URL")
+
     print("=" * 60)
     print("PhishGuard AI -- Multi-Browser Extension Packaging")
+    if api_url:
+        print(f"[*] Pre-configuring extension API backend -> {api_url}")
     print("=" * 60)
 
     # 1. Chrome / Edge Package
-    chrome_zip = build_package("chrome", "manifest.json", is_firefox=False)
+    chrome_zip = build_package("chrome", "manifest.json", is_firefox=False, api_url=api_url)
 
     # 2. Firefox Package
-    firefox_zip = build_package("firefox", "manifest_firefox.json", is_firefox=True)
+    firefox_zip = build_package("firefox", "manifest_firefox.json", is_firefox=True, api_url=api_url)
 
     # 3. Default distribution alias
     manifest_data = validate_manifest(EXTENSION_DIR / "manifest.json")
@@ -131,4 +164,9 @@ package_extension = package_all
 
 
 if __name__ == "__main__":
-    package_all()
+    import argparse
+    parser = argparse.ArgumentParser(description="Package PhishGuard AI Browser Extensions")
+    parser.add_argument("--api-url", default=None, help="Custom backend API base URL (e.g. https://phishguard.ai)")
+    args = parser.parse_args()
+    package_all(api_url=args.api_url)
+
