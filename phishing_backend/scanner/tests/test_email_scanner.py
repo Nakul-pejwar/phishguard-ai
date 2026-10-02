@@ -10,8 +10,11 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from scanner.orchestrator import DetectionOrchestrator  # noqa: E402
-from scripts.package_extension import EXTENSION_DIR, package_extension, validate_manifest  # noqa: E402
-
+from scripts.package_extension import (  # noqa: E402
+    EXTENSION_DIR,
+    package_extension,
+    validate_manifest,
+)
 
 
 def test_sender_domain_mismatch_detection():

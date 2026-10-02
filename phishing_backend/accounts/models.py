@@ -382,3 +382,128 @@ class IncidentReport(models.Model):
 
     def __str__(self):
         return f"[{self.status}] {self.domain} ({self.report_type})"
+
+
+class SSOConfiguration(models.Model):
+    """
+    SAML 2.0 / OIDC Identity Provider Configuration for Enterprise Single Sign-On.
+    """
+    organization = models.OneToOneField(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="sso_config",
+    )
+    idp_entity_id = models.CharField(max_length=255, blank=True)
+    idp_sso_url = models.URLField(max_length=500, blank=True)
+    idp_x509_cert = models.TextField(blank=True)
+    enforce_sso_for_domain = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Domain to enforce SSO for, e.g. bankcorp.in",
+    )
+    is_enabled = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        status = "Active" if self.is_enabled else "Disabled"
+        return f"SSO Config ({self.organization.name}) - {status}"
+
+
+class AuditLog(models.Model):
+    """
+    Immutable, append-only enterprise security audit log.
+    Captures policy modifications, user invitations/removals, SIEM/SSO changes,
+    and compliance actions.
+    """
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="audit_logs",
+    )
+    actor_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="audit_actions",
+    )
+    action = models.CharField(max_length=100, db_index=True)
+    target_type = models.CharField(max_length=50, blank=True)
+    target_id = models.CharField(max_length=100, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    details = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise PermissionError("AuditLog entries are immutable and cannot be modified.")
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise PermissionError("AuditLog entries are append-only and cannot be deleted.")
+
+    def __str__(self):
+        actor = self.actor_user.email if self.actor_user else "System"
+        return f"[{self.created_at:%Y-%m-%d %H:%M}] {actor} -> {self.action} ({self.organization.name})"
+
+
+class SIEMConfiguration(models.Model):
+    """
+    Enterprise SIEM Webhook & Streamer configuration (Splunk HEC, Microsoft Sentinel, Datadog).
+    """
+    TYPE_SPLUNK = "splunk_hec"
+    TYPE_SENTINEL = "azure_sentinel"
+    TYPE_GENERIC_WEBHOOK = "generic_webhook"
+    TYPE_DATADOG = "datadog"
+
+    TYPE_CHOICES = [
+        (TYPE_SPLUNK, "Splunk HEC"),
+        (TYPE_SENTINEL, "Microsoft Sentinel"),
+        (TYPE_GENERIC_WEBHOOK, "Generic Webhook / Syslog"),
+        (TYPE_DATADOG, "Datadog Security"),
+    ]
+
+    organization = models.OneToOneField(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="siem_config",
+    )
+    siem_type = models.CharField(max_length=50, choices=TYPE_CHOICES, default=TYPE_GENERIC_WEBHOOK)
+    endpoint_url = models.URLField(max_length=500)
+    auth_header_name = models.CharField(max_length=100, default="Authorization")
+    auth_token = models.CharField(max_length=500, blank=True)
+    min_severity = models.CharField(max_length=20, default="high")  # 'high', 'medium', 'all'
+    is_active = models.BooleanField(default=True)
+    last_event_sent_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        status = "Active" if self.is_active else "Inactive"
+        return f"SIEM: {self.siem_type} ({self.organization.name}) - {status}"
+
+
+class DataRetentionPolicy(models.Model):
+    """
+    Indian DPDP Act & GDPR compliant automated data retention policy.
+    """
+    organization = models.OneToOneField(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="retention_policy",
+    )
+    retention_days = models.IntegerField(
+        default=90,
+        help_text="Days to retain privacy-safe domain & hash scan logs before automated purge.",
+    )
+    auto_purge_enabled = models.BooleanField(default=True)
+    anonymize_on_purge = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Retention: {self.retention_days} days ({self.organization.name})"
+
