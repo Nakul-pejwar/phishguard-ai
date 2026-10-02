@@ -706,3 +706,244 @@ h1, h2, h3, h4 {
     flex-direction: column;
   }
 }
+
+/* ==========================================================================
+   Extension Install & Guided Setup Modal
+   ========================================================================== */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(4, 7, 14, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  padding: 20px;
+}
+
+.modal-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-card {
+  background: #0d121f;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 40px rgba(37, 99, 235, 0.15);
+  border-radius: 16px;
+  max-width: 580px;
+  width: 100%;
+  padding: 32px;
+  position: relative;
+  transform: translateY(20px) scale(0.98);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-backdrop.active .modal-card {
+  transform: translateY(0) scale(1);
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 28px;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.modal-close:hover {
+  color: #fff;
+}
+
+.modal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.modal-title {
+  font-size: 22px;
+  font-family: var(--font-heading);
+  margin-bottom: 6px;
+}
+
+.modal-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.highlight-text {
+  color: var(--primary-glow);
+  font-family: monospace;
+  font-weight: 600;
+}
+
+/* Modal Tabs */
+.modal-tabs {
+  display: flex;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 24px;
+  gap: 4px;
+}
+
+.modal-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal-tab.active {
+  background: var(--primary);
+  color: white;
+}
+
+/* Setup Steps */
+.setup-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.step-item {
+  display: flex;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 14px 16px;
+  align-items: flex-start;
+}
+
+.step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.step-content h4 {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.step-content p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.step-subactions {
+  margin-top: 6px;
+}
+
+.direct-download-link {
+  font-size: 12px;
+  color: var(--primary-glow);
+  text-decoration: underline;
+}
+
+.copy-url-box {
+  display: flex;
+  align-items: center;
+  background: #070a12;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 4px 8px 4px 12px;
+  margin-top: 8px;
+  gap: 10px;
+}
+
+.copy-url-box code {
+  flex: 1;
+  font-family: monospace;
+  font-size: 13px;
+  color: #38bdf8;
+}
+
+.copy-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.copy-btn.copied {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+.modal-footer {
+  text-align: center;
+}
+
+.modal-footer .btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+}
+

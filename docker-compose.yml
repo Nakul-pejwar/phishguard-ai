@@ -96,6 +96,8 @@ services:
       - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./landing:/var/www/landing:ro
+      - ./dist:/var/www/dist:ro
       - caddy_data:/data
       - caddy_config:/config
 
@@ -104,3 +106,4 @@ volumes:
   redis_data:
   caddy_data:
   caddy_config:
+

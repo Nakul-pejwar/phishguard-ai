@@ -28,7 +28,7 @@
       </nav>
       <div class="nav-cta">
         <a href="#pricing" class="btn btn-secondary">Sign In</a>
-        <a href="#install" class="btn btn-primary">Add to Chrome — Free</a>
+        <a href="#install" class="btn btn-primary trigger-install-modal" data-browser="chrome">Add to Chrome — Free</a>
       </div>
     </div>
   </header>
@@ -50,7 +50,7 @@
       </p>
       
       <div class="hero-actions" id="install">
-        <a href="#" class="btn btn-hero-primary" id="installChromeBtn">
+        <a href="#" class="btn btn-hero-primary trigger-install-modal" id="installChromeBtn" data-browser="chrome">
           <span class="btn-icon">⚡</span> Add to Chrome (Manifest V3)
         </a>
         <a href="#scanner-demo" class="btn btn-hero-secondary">
@@ -340,6 +340,66 @@
       <p>© 2026 PhishGuard AI, Inc. All rights reserved. Built for Indian BFSI & Global Enterprise Security.</p>
     </div>
   </footer>
+
+  <!-- Extension Download & Guided Setup Modal -->
+  <div class="modal-backdrop" id="installModal">
+    <div class="modal-card">
+      <button class="modal-close" id="closeInstallModal">&times;</button>
+      
+      <div class="modal-header">
+        <div class="modal-badge">
+          <span class="pulse-dot"></span> Download Started
+        </div>
+        <h3 class="modal-title">Install PhishGuard AI in Seconds</h3>
+        <p class="modal-subtitle">Your download for <span class="highlight-text" id="downloadPackageName">phishguard-chrome-v2.0.0.zip</span> has begun.</p>
+      </div>
+
+      <!-- Browser Switcher Tabs -->
+      <div class="modal-tabs">
+        <button class="modal-tab active" data-tab="chrome">Google Chrome / Brave</button>
+        <button class="modal-tab" data-tab="edge">Microsoft Edge</button>
+        <button class="modal-tab" data-tab="firefox">Mozilla Firefox</button>
+      </div>
+
+      <!-- Steps Content -->
+      <div class="setup-steps">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Extract the ZIP Archive</h4>
+            <p>Locate the downloaded zip file in your Downloads folder and unzip / extract it.</p>
+            <div class="step-subactions">
+              <a href="/downloads/phishguard-chrome-v2.0.0.zip" id="manualDownloadLink" class="direct-download-link" download>⬇️ Click here if download didn't start</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Open Extensions Manager</h4>
+            <p>Open a new tab and navigate to your browser's extensions page:</p>
+            <div class="copy-url-box">
+              <code id="extensionUrlText">chrome://extensions</code>
+              <button class="copy-btn" id="copyUrlBtn">Copy URL</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Enable Developer Mode & Load</h4>
+            <p>Toggle <strong>Developer mode</strong> (top-right corner), click <strong>"Load unpacked"</strong> (top-left), and select the extracted folder.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-hero-primary" id="confirmInstalledBtn">🛡️ Done! Test PhishGuard Protection</button>
+      </div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>

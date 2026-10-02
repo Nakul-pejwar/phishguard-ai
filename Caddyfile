@@ -2,7 +2,7 @@
     email {$ACME_EMAIL:admin@phishguard.ai}
 }
 
-{$DOMAIN:api.phishguard.ai} {
+{$DOMAIN:localhost} {
     encode zstd gzip
 
     header {
@@ -12,10 +12,27 @@
         Referrer-Policy "strict-origin-when-cross-origin"
     }
 
-    reverse_proxy web:8000 {
-        header_up Host {host}
-        header_up X-Real-IP {remote_host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
+    # 1. API Endpoints & Health Probe -> Django Gunicorn
+    handle /api/* {
+        reverse_proxy web:8000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # 2. Direct Extension Downloads (Chrome & Firefox ZIPs) -> /var/www/dist
+    handle_path /downloads/* {
+        root * /var/www/dist
+        file_server
+    }
+
+    # 3. Static SaaS Landing Page -> /var/www/landing
+    handle {
+        root * /var/www/landing
+        file_server
+        try_files {path} {path}/ /index.html
     }
 }
+

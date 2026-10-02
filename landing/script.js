@@ -143,12 +143,152 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // 3. Chrome Extension Install CTA
-  const installChromeBtn = document.getElementById("installChromeBtn");
-  if (installChromeBtn) {
-    installChromeBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      alert("PhishGuard AI Chrome Extension package is available in the /dist folder. Ready for Chrome Web Store installation.");
+  // 3. Extension Direct Download & Setup Modal Flow
+  // Set window.CHROME_STORE_URL when published to redirect directly to the store
+  window.CHROME_STORE_URL = window.CHROME_STORE_URL || null;
+
+  const installModal = document.getElementById("installModal");
+  const closeInstallModal = document.getElementById("closeInstallModal");
+  const confirmInstalledBtn = document.getElementById("confirmInstalledBtn");
+  const modalTabs = document.querySelectorAll(".modal-tab");
+  const extensionUrlText = document.getElementById("extensionUrlText");
+  const copyUrlBtn = document.getElementById("copyUrlBtn");
+  const manualDownloadLink = document.getElementById("manualDownloadLink");
+  const downloadPackageName = document.getElementById("downloadPackageName");
+
+  const BROWSER_CONFIGS = {
+    chrome: {
+      pkg: "phishguard-chrome-v2.0.0.zip",
+      url: "chrome://extensions",
+      step3: "Toggle <strong>Developer mode</strong> (top-right corner), click <strong>'Load unpacked'</strong> (top-left), and select the extracted folder."
+    },
+    edge: {
+      pkg: "phishguard-chrome-v2.0.0.zip",
+      url: "edge://extensions",
+      step3: "Enable <strong>Developer mode</strong> in the left sidebar, click <strong>'Load unpacked'</strong>, and select the extracted folder."
+    },
+    firefox: {
+      pkg: "phishguard-firefox-v2.0.0.zip",
+      url: "about:debugging#/runtime/this-firefox",
+      step3: "Click <strong>'Load Temporary Add-on...'</strong> and select the <code>manifest.json</code> inside the extracted folder."
+    }
+  };
+
+  let currentBrowser = "chrome";
+
+  function triggerDownload(browserKey = "chrome") {
+    if (window.CHROME_STORE_URL && browserKey === "chrome") {
+      window.open(window.CHROME_STORE_URL, "_blank");
+      return;
+    }
+
+    const config = BROWSER_CONFIGS[browserKey] || BROWSER_CONFIGS.chrome;
+    const downloadUrl = `/downloads/${config.pkg}`;
+
+    // Trigger browser file download
+    const hiddenLink = document.createElement("a");
+    hiddenLink.href = downloadUrl;
+    hiddenLink.setAttribute("download", config.pkg);
+    document.body.appendChild(hiddenLink);
+    hiddenLink.click();
+    document.body.removeChild(hiddenLink);
+
+    // Open Guided Setup Modal
+    openInstallModal(browserKey);
+  }
+
+  function openInstallModal(browserKey = "chrome") {
+    currentBrowser = browserKey;
+    updateModalBrowserView(browserKey);
+    if (installModal) {
+      installModal.classList.add("active");
+      document.body.style.overflow = "hidden";
+    }
+  }
+
+  function closeModal() {
+    if (installModal) {
+      installModal.classList.remove("active");
+      document.body.style.overflow = "";
+    }
+  }
+
+  function updateModalBrowserView(browserKey) {
+    const config = BROWSER_CONFIGS[browserKey] || BROWSER_CONFIGS.chrome;
+    if (downloadPackageName) downloadPackageName.textContent = config.pkg;
+    if (extensionUrlText) extensionUrlText.textContent = config.url;
+    if (manualDownloadLink) {
+      manualDownloadLink.href = `/downloads/${config.pkg}`;
+      manualDownloadLink.setAttribute("download", config.pkg);
+    }
+
+    modalTabs.forEach(tab => {
+      if (tab.getAttribute("data-tab") === browserKey) {
+        tab.classList.add("active");
+      } else {
+        tab.classList.remove("active");
+      }
     });
   }
+
+  // Attach modal triggers
+  document.querySelectorAll(".trigger-install-modal").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const targetBrowser = btn.getAttribute("data-browser") || "chrome";
+      triggerDownload(targetBrowser);
+    });
+  });
+
+  // Modal tab switching
+  modalTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      const browser = tab.getAttribute("data-tab");
+      updateModalBrowserView(browser);
+    });
+  });
+
+  // Copy URL button
+  if (copyUrlBtn && extensionUrlText) {
+    copyUrlBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText(extensionUrlText.textContent).then(() => {
+        const originalText = copyUrlBtn.textContent;
+        copyUrlBtn.textContent = "Copied!";
+        copyUrlBtn.classList.add("copied");
+        setTimeout(() => {
+          copyUrlBtn.textContent = originalText;
+          copyUrlBtn.classList.remove("copied");
+        }, 2000);
+      }).catch(() => {
+        copyUrlBtn.textContent = "Copied!";
+      });
+    });
+  }
+
+  // Close modal events
+  if (closeInstallModal) {
+    closeInstallModal.addEventListener("click", closeModal);
+  }
+
+  if (confirmInstalledBtn) {
+    confirmInstalledBtn.addEventListener("click", () => {
+      closeModal();
+      const demoSection = document.getElementById("scanner-demo");
+      if (demoSection) {
+        demoSection.scrollIntoView({ behavior: "smooth" });
+      }
+    });
+  }
+
+  if (installModal) {
+    installModal.addEventListener("click", (e) => {
+      if (e.target === installModal) closeModal();
+    });
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && installModal && installModal.classList.contains("active")) {
+      closeModal();
+    }
+  });
 });
