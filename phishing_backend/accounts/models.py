@@ -258,3 +258,127 @@ class UsageLog(models.Model):
 
     def __str__(self):
         return f"{self.domain} ({self.verdict}) @ {self.created_at}"
+
+
+class OrgPolicy(models.Model):
+    MODE_BLOCK = "block"
+    MODE_WARN = "warn"
+
+    MODE_CHOICES = [
+        (MODE_BLOCK, "Block Dangerous Sites (Strict)"),
+        (MODE_WARN, "Warn Only"),
+    ]
+
+    organization = models.OneToOneField(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="policy",
+    )
+    mode = models.CharField(max_length=20, choices=MODE_CHOICES, default=MODE_BLOCK)
+    custom_allowlist = models.JSONField(default=list, blank=True, help_text="List of trusted domains")
+    custom_blocklist = models.JSONField(default=list, blank=True, help_text="List of blocked domains")
+    enforce_extension = models.BooleanField(default=True)
+    alert_webhook_url = models.URLField(max_length=1024, blank=True)
+    alert_email = models.EmailField(blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Policy for {self.organization.name} (Mode: {self.mode})"
+
+
+class OrgInvitation(models.Model):
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="invitations",
+    )
+    email = models.EmailField(db_index=True)
+    role = models.CharField(max_length=20, choices=Membership.ROLE_CHOICES, default=Membership.ROLE_MEMBER)
+    token = models.CharField(max_length=64, unique=True, db_index=True)
+    invited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sent_invites",
+    )
+    expires_at = models.DateTimeField()
+    accepted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    @classmethod
+    def create_invite(cls, organization, email, role=Membership.ROLE_MEMBER, invited_by=None, days_valid=7):
+        token = secrets.token_urlsafe(32)
+        expires_at = timezone.now() + timezone.timedelta(days=days_valid)
+        return cls.objects.create(
+            organization=organization,
+            email=email.lower().strip(),
+            role=role,
+            token=token,
+            invited_by=invited_by,
+            expires_at=expires_at,
+        )
+
+    @property
+    def is_valid(self):
+        return self.accepted_at is None and timezone.now() < self.expires_at
+
+    def __str__(self):
+        return f"Invite: {self.email} -> {self.organization.name} ({self.role})"
+
+
+class IncidentReport(models.Model):
+    TYPE_PHISHING = "phishing"
+    TYPE_FALSE_POSITIVE = "false_positive"
+    TYPE_SUSPICIOUS = "suspicious"
+
+    TYPE_CHOICES = [
+        (TYPE_PHISHING, "Phishing Link"),
+        (TYPE_FALSE_POSITIVE, "False Positive"),
+        (TYPE_SUSPICIOUS, "Suspicious Activity"),
+    ]
+
+    STATUS_PENDING = "pending"
+    STATUS_CONFIRMED = "confirmed_phishing"
+    STATUS_FALSE_POSITIVE = "false_positive"
+    STATUS_DISMISSED = "dismissed"
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending Review"),
+        (STATUS_CONFIRMED, "Confirmed Threat"),
+        (STATUS_FALSE_POSITIVE, "False Positive / Safe"),
+        (STATUS_DISMISSED, "Dismissed"),
+    ]
+
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="incident_reports",
+    )
+    reported_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reported_incidents",
+    )
+    url_hash = models.CharField(max_length=64, db_index=True)
+    domain = models.CharField(max_length=255, db_index=True)
+    report_type = models.CharField(max_length=30, choices=TYPE_CHOICES, default=TYPE_PHISHING)
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    notes = models.TextField(blank=True)
+    resolved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="resolved_incidents",
+    )
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"[{self.status}] {self.domain} ({self.report_type})"

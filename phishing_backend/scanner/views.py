@@ -69,11 +69,6 @@ def check_url_api(request):
     try:
         from .orchestrator import DetectionOrchestrator
 
-        result = DetectionOrchestrator.analyze(url)
-        clean_url = result["clean_url"]
-        domain = result["domain"]
-        url_hash = hashlib.sha256(clean_url.encode("utf-8")).hexdigest()
-
         # Resolve organization & real User instance for ForeignKey
         organization = getattr(request, "organization", None)
         user_instance = None
@@ -81,8 +76,17 @@ def check_url_api(request):
             from django.contrib.auth.models import User
             if isinstance(request.user, User):
                 user_instance = request.user
+                if not organization:
+                    membership = user_instance.memberships.first()
+                    if membership:
+                        organization = membership.organization
             elif hasattr(request.user, "owner_user") and isinstance(request.user.owner_user, User):
                 user_instance = request.user.owner_user
+
+        result = DetectionOrchestrator.analyze(url, organization=organization)
+        clean_url = result["clean_url"]
+        domain = result["domain"]
+        url_hash = hashlib.sha256(clean_url.encode("utf-8")).hexdigest()
 
         # 1. Privacy-compliant usage log (stores domain + SHA-256 hash)
         UsageLog.objects.create(

@@ -23,10 +23,41 @@ class DetectionOrchestrator:
     """
 
     @classmethod
-    def analyze(cls, url: str) -> dict:
+    def analyze(cls, url: str, organization=None) -> dict:
         clean_url = normalize_url(url)
         domain = get_domain(clean_url)
         url_hash = hashlib.sha256(clean_url.encode("utf-8")).hexdigest()
+
+        # Signal 0: Org-Level Security Policy Allowlist & Blocklist
+        if organization:
+            policy = getattr(organization, "policy", None)
+            if policy:
+                if domain in (policy.custom_allowlist or []):
+                    return {
+                        "input_url": url,
+                        "clean_url": clean_url,
+                        "domain": domain,
+                        "verdict": "safe",
+                        "risk_level": "Safe",
+                        "raw_phishing_probability": 0.01,
+                        "phishing_probability": 0.01,
+                        "legitimate_probability": 0.99,
+                        "reasons": ["Domain allowlisted by organization security policy."],
+                        "signals": {"org_policy_allowlist": True},
+                    }
+                if domain in (policy.custom_blocklist or []):
+                    return {
+                        "input_url": url,
+                        "clean_url": clean_url,
+                        "domain": domain,
+                        "verdict": "phishing",
+                        "risk_level": "Critical Risk",
+                        "raw_phishing_probability": 1.0,
+                        "phishing_probability": 1.0,
+                        "legitimate_probability": 0.0,
+                        "reasons": ["Domain blocked by organization security policy."],
+                        "signals": {"org_policy_blocklist": True},
+                    }
 
         # Signal 1: Threat Intel Check
         threat_resp = cls._evaluate_threat_intel(url, clean_url, domain, url_hash)
