@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhishGuard AI — Enterprise Real-Time Phishing & Brand Fraud Shield</title>
+  <meta name="description" content="AI-powered real-time phishing protection, Indian BFSI lookalike defense, and credential theft prevention for modern enterprises and consumers.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="#" class="logo">
+        <span class="logo-shield">🛡️</span>
+        <span class="logo-text">PhishGuard<span class="logo-ai">AI</span></span>
+      </a>
+      <nav class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#scanner-demo">Live Scanner</a>
+        <a href="#indian-bfsi">BFSI Defense</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <div class="nav-cta">
+        <a href="#pricing" class="btn btn-secondary">Sign In</a>
+        <a href="#install" class="btn btn-primary">Add to Chrome — Free</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-glow"></div>
+    <div class="container hero-container">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Next-Gen Multi-Signal Threat Engine v3.0 Live
+      </div>
+      <h1 class="hero-title">
+        Stop Phishing & Brand Impersonation <br>
+        <span class="gradient-text">Before the Page Renders.</span>
+      </h1>
+      <p class="hero-subtitle">
+        PhishGuard AI intercepts deceptive domains, typosquats targeting Indian BFSI institutions, and spoofed email links in real time with zero-PII privacy architecture.
+      </p>
+      
+      <div class="hero-actions" id="install">
+        <a href="#" class="btn btn-hero-primary" id="installChromeBtn">
+          <span class="btn-icon">⚡</span> Add to Chrome (Manifest V3)
+        </a>
+        <a href="#scanner-demo" class="btn btn-hero-secondary">
+          Try Live Interactive Scanner →
+        </a>
+      </div>
+
+      <div class="hero-trust">
+        <p class="trust-label">Defending enterprise teams and consumers against threats targeting:</p>
+        <div class="trust-brands">
+          <span class="trust-chip">HDFC Bank</span>
+          <span class="trust-chip">State Bank of India (SBI)</span>
+          <span class="trust-chip">ICICI Bank</span>
+          <span class="trust-chip">Axis Bank</span>
+          <span class="trust-chip">Paytm</span>
+          <span class="trust-chip">Razorpay</span>
+          <span class="trust-chip">UPI / NPCI</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Scanner Demo Widget -->
+  <section class="demo-section" id="scanner-demo">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Test the Detection Engine</h2>
+        <p class="section-subtitle">Experience our orchestrated multi-signal AI analysis in real time.</p>
+      </div>
+
+      <div class="scanner-card">
+        <div class="scanner-input-group">
+          <input type="text" id="demoUrlInput" placeholder="Enter any suspicious URL or choose a sample..." value="http://hdfc-verify-login.xyz/auth">
+          <button id="scanUrlBtn" class="btn btn-primary">Analyze URL</button>
+        </div>
+
+        <div class="sample-pills">
+          <span class="sample-label">Try sample:</span>
+          <button class="pill-btn" data-url="http://hdfc-verify-login.xyz/auth">HDFC Lookalike</button>
+          <button class="pill-btn" data-url="http://sbi-kyc-update-pan.top/login">SBI Typosquat</button>
+          <button class="pill-btn" data-url="https://onlinesbi.sbi/portal">Legitimate SBI</button>
+          <button class="pill-btn" data-url="http://bit.ly/3xPanUpdate">Suspicious Shortener</button>
+        </div>
+
+        <div class="scanner-result" id="scannerResultBox">
+          <div class="result-header">
+            <div class="result-status-badge status-threat" id="resultBadge">CRITICAL THREAT DETECTED</div>
+            <div class="result-score" id="resultScore">Risk Score: 96 / 100</div>
+          </div>
+          <div class="result-body">
+            <div class="result-detail">
+              <span class="detail-label">Clean Domain:</span>
+              <span class="detail-value" id="resultDomain">hdfc-verify-login.xyz</span>
+            </div>
+            <div class="result-signals">
+              <h4>Signals Synthesized:</h4>
+              <ul id="resultReasonsList">
+                <li>🔴 Impersonating Indian financial institution: HDFC Bank.</li>
+                <li>🔴 High Shannon entropy with suspicious TLD (.xyz).</li>
+                <li>🔴 Insecure HTTP transmission containing sensitive authentication keywords.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Features Grid -->
+  <section class="features-section" id="features">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Built for Modern Security Teams</h2>
+        <p class="section-subtitle">Everything you need to secure enterprise mailboxes, endpoints, and credentials.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3>Pre-Navigation Interception</h3>
+          <p>Blocks malicious navigation in the Chrome/Edge background service worker before suspicious web content ever executes in the DOM.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">✉️</div>
+          <h3>Webmail Link Badges</h3>
+          <p>Real-time link scanning for Gmail & Outlook Web. Injects visual safety badges and warns against sender-link domain spoofing mismatches.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🇮🇳</div>
+          <h3>Indian BFSI Lookalike AI</h3>
+          <p>Specialized distance heuristics and brand catalog protecting against typosquats targeting Indian banks, fintechs, and government portals.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3>Zero-PII Privacy Architecture</h3>
+          <p>Privacy by design: Database logs store only normalized domain names and SHA-256 hashes. Full query parameters and sensitive tokens never reach disk.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🏢</div>
+          <h3>Enterprise SAML & SIEM</h3>
+          <p>Single Sign-On with Okta and Azure AD. Real-time threat streaming into Splunk HEC, Microsoft Sentinel, Datadog, and SOC webhooks.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📜</div>
+          <h3>DPDP Act Compliance</h3>
+          <p>Automated data retention policies, right-to-erasure endpoints, and immutable append-only audit logging designed for Indian DPDP Act & GDPR.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Matrix -->
+  <section class="pricing-section" id="pricing">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Transparent, Predictable Pricing</h2>
+        <p class="section-subtitle">Start free as an individual, or empower your entire SOC team.</p>
+        
+        <div class="currency-toggle">
+          <button class="toggle-btn active" id="btnInr">INR (₹)</button>
+          <button class="toggle-btn" id="btnUsd">USD ($)</button>
+        </div>
+      </div>
+
+      <div class="pricing-grid">
+        <!-- Free Plan -->
+        <div class="pricing-card">
+          <div class="card-header">
+            <h3>Free Shield</h3>
+            <p>For individual browsing security</p>
+            <div class="price-display">
+              <span class="price" data-inr="₹0" data-usd="$0">₹0</span>
+              <span class="period">/ forever</span>
+            </div>
+          </div>
+          <ul class="plan-features">
+            <li>✓ Chrome & Edge MV3 Extension</li>
+            <li>✓ 20 Real-Time Scans / Day</li>
+            <li>✓ Indian BFSI Lookalike Detection</li>
+            <li>✓ Interstitial Warning Shield</li>
+            <li>✗ Email Link Scanner</li>
+            <li>✗ Team Dashboard & SIEM</li>
+          </ul>
+          <a href="#install" class="btn btn-outline btn-block">Get Started Free</a>
+        </div>
+
+        <!-- Pro Plan -->
+        <div class="pricing-card popular">
+          <div class="popular-tag">Most Popular</div>
+          <div class="card-header">
+            <h3>Pro</h3>
+            <p>For power users & professionals</p>
+            <div class="price-display">
+              <span class="price" data-inr="₹499" data-usd="$9">₹499</span>
+              <span class="period">/ month</span>
+            </div>
+          </div>
+          <ul class="plan-features">
+            <li>✓ Everything in Free</li>
+            <li>✓ <strong>500 Scans / Day</strong></li>
+            <li>✓ Gmail & Outlook Link Scanner</li>
+            <li>✓ Sender Domain Spoofing Defense</li>
+            <li>✓ Priority API Response (<50ms)</li>
+            <li>✗ Team Management</li>
+          </ul>
+          <a href="#" class="btn btn-primary btn-block">Upgrade to Pro</a>
+        </div>
+
+        <!-- Team Plan -->
+        <div class="pricing-card">
+          <div class="card-header">
+            <h3>Team</h3>
+            <p>For startups, fintechs & SMBs</p>
+            <div class="price-display">
+              <span class="price" data-inr="₹1,499" data-usd="$29">₹1,499</span>
+              <span class="period">/ seat / mo</span>
+            </div>
+          </div>
+          <ul class="plan-features">
+            <li>✓ Everything in Pro</li>
+            <li>✓ <strong>Unlimited Threat Scans</strong></li>
+            <li>✓ Multi-Tenant Team Dashboard</li>
+            <li>✓ Custom Allowlist / Blocklist Policy</li>
+            <li>✓ Employee Incident Report Queue</li>
+            <li>✓ Slack & MS Teams Webhook Alerts</li>
+          </ul>
+          <a href="#" class="btn btn-primary btn-block">Start 14-Day Team Trial</a>
+        </div>
+
+        <!-- Enterprise Plan -->
+        <div class="pricing-card enterprise">
+          <div class="card-header">
+            <h3>Enterprise</h3>
+            <p>For BFSI banks & large institutions</p>
+            <div class="price-display">
+              <span class="price">Custom</span>
+              <span class="period">annual billing</span>
+            </div>
+          </div>
+          <ul class="plan-features">
+            <li>✓ Everything in Team</li>
+            <li>✓ SAML 2.0 / OIDC SSO (Okta/Azure)</li>
+            <li>✓ SIEM Forwarding (Splunk / Sentinel)</li>
+            <li>✓ Immutable Append-Only Audit Log</li>
+            <li>✓ DPDP Act Data Retention Controls</li>
+            <li>✓ Dedicated 24/7 SLA & Custom DPA</li>
+          </ul>
+          <a href="mailto:enterprise@phishguard.ai" class="btn btn-outline btn-block">Contact Enterprise Sales</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="faq-section" id="faq">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Frequently Asked Questions</h2>
+      </div>
+
+      <div class="faq-accordion">
+        <details class="faq-item">
+          <summary class="faq-question">How does PhishGuard protect my privacy?</summary>
+          <div class="faq-answer">
+            <p>PhishGuard uses a Zero-PII logging policy. URLs are normalized and only the domain name alongside a SHA-256 hash are recorded. Query parameters, session IDs, and email bodies are never stored on our servers.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">Does PhishGuard slow down my web browsing?</summary>
+          <div class="faq-answer">
+            <p>No. PhishGuard evaluates top verified global and Indian institutions locally using an in-memory allowlist with 0ms latency. Uncached domains are checked via high-speed asynchronous edge APIs under 50ms.</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">Is PhishGuard compliant with India's DPDP Act?</summary>
+          <div class="faq-answer">
+            <p>Yes. PhishGuard aligns with the Digital Personal Data Protection (DPDP) Act 2023 with automated data retention policies, right-to-erasure endpoints, and enterprise DPAs.</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-container">
+      <div class="footer-brand">
+        <div class="logo">
+          <span class="logo-shield">🛡️</span>
+          <span class="logo-text">PhishGuard<span class="logo-ai">AI</span></span>
+        </div>
+        <p>Real-time cybersecurity and anti-fraud intelligence for the modern digital economy.</p>
+      </div>
+
+      <div class="footer-links">
+        <div class="link-col">
+          <h4>Product</h4>
+          <a href="#features">Features</a>
+          <a href="#scanner-demo">Live Demo</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#">Chrome Web Store</a>
+        </div>
+        <div class="link-col">
+          <h4>Compliance & Legal</h4>
+          <a href="../docs/SECURITY_WHITEPAPER.md">Security Whitepaper</a>
+          <a href="../docs/DPA_TEMPLATE.md">Data Processing Agreement</a>
+          <a href="../PRIVACY_POLICY.md">Privacy Policy</a>
+          <a href="../docs/legal/TERMS_OF_SERVICE.md">Terms of Service</a>
+          <a href="../docs/legal/REFUND_POLICY.md">Refund Policy</a>
+        </div>
+        <div class="link-col">
+          <h4>Enterprise</h4>
+          <a href="mailto:enterprise@phishguard.ai">Enterprise Sales</a>
+          <a href="mailto:support@phishguard.ai">SOC Support</a>
+          <a href="../docs/DISASTER_RECOVERY.md">Disaster Recovery</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 PhishGuard AI, Inc. All rights reserved. Built for Indian BFSI & Global Enterprise Security.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
