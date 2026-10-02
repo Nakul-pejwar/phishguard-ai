@@ -46,7 +46,7 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://app.phishguard.ai}
       SECURE_SSL_REDIRECT: ${SECURE_SSL_REDIRECT:-False}
     ports:
-      - "8000:8000"
+      - "127.0.0.1:${WEB_PORT:-8093}:8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
       interval: 10s
@@ -86,6 +86,7 @@ services:
       REDIS_URL: redis://redis:6379/0
 
   caddy:
+    profiles: ["caddy"]
     image: caddy:2-alpine
     restart: unless-stopped
     depends_on:

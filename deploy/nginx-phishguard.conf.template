@@ -1,0 +1,70 @@
+# ==============================================================================
+# PhishGuard AI - Nginx Virtual Host Template for VPS (Reverse Proxy Mode)
+# Host Domain: ${DOMAIN} (e.g. phishguard.vitalsnvectors.in)
+# ==============================================================================
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${DOMAIN};
+
+    # Let's Encrypt ACME Challenge
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    # Redirect all HTTP traffic to HTTPS
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name ${DOMAIN};
+
+    # SSL Certificates (managed by Certbot)
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    # Security Headers
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+
+    # Gzip Compression
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+    # Root for Static Landing Page
+    root ${APP_DIR}/landing;
+    index index.html;
+
+    # 1. API Endpoints -> Django Backend (Gunicorn container on port 8093)
+    location /api/ {
+        proxy_pass http://127.0.0.1:${WEB_PORT:-8093};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 120s;
+        proxy_connect_timeout 60s;
+    }
+
+    # 2. Direct Browser Extension Downloads (Chrome & Firefox ZIPs)
+    location /downloads/ {
+        alias ${APP_DIR}/dist/;
+        autoindex off;
+        add_header Content-Disposition 'attachment';
+    }
+
+    # 3. Static Landing Page & UI
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
