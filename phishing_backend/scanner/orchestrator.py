@@ -23,41 +23,15 @@ class DetectionOrchestrator:
     """
 
     @classmethod
-    def analyze(cls, url: str, organization=None) -> dict:
+    def analyze(cls, url: str, organization=None, sender_domain: str | None = None) -> dict:
         clean_url = normalize_url(url)
         domain = get_domain(clean_url)
         url_hash = hashlib.sha256(clean_url.encode("utf-8")).hexdigest()
 
         # Signal 0: Org-Level Security Policy Allowlist & Blocklist
-        if organization:
-            policy = getattr(organization, "policy", None)
-            if policy:
-                if domain in (policy.custom_allowlist or []):
-                    return {
-                        "input_url": url,
-                        "clean_url": clean_url,
-                        "domain": domain,
-                        "verdict": "safe",
-                        "risk_level": "Safe",
-                        "raw_phishing_probability": 0.01,
-                        "phishing_probability": 0.01,
-                        "legitimate_probability": 0.99,
-                        "reasons": ["Domain allowlisted by organization security policy."],
-                        "signals": {"org_policy_allowlist": True},
-                    }
-                if domain in (policy.custom_blocklist or []):
-                    return {
-                        "input_url": url,
-                        "clean_url": clean_url,
-                        "domain": domain,
-                        "verdict": "phishing",
-                        "risk_level": "Critical Risk",
-                        "raw_phishing_probability": 1.0,
-                        "phishing_probability": 1.0,
-                        "legitimate_probability": 0.0,
-                        "reasons": ["Domain blocked by organization security policy."],
-                        "signals": {"org_policy_blocklist": True},
-                    }
+        org_resp = cls._evaluate_org_policy(organization, domain, url, clean_url)
+        if org_resp:
+            return org_resp
 
         # Signal 1: Threat Intel Check
         threat_resp = cls._evaluate_threat_intel(url, clean_url, domain, url_hash)
@@ -68,6 +42,7 @@ class DetectionOrchestrator:
         signals = {
             "threat_intel_match": False,
             "brand_lookalike_detected": False,
+            "sender_domain_mismatch": False,
             "structural_risk_score": 0,
             "ml_model_score": 0.0,
             "trusted_domain": False,
@@ -81,6 +56,14 @@ class DetectionOrchestrator:
             lookalike_penalty = 60
             reasons.append(lookalike_info["reason"])
 
+        # Signal 2b: Sender vs Link Domain Mismatch Analysis (Email Phishing Protection)
+        mismatch_penalty, mismatch_reasons, is_mismatch = cls._evaluate_sender_mismatch(
+            sender_domain, domain, lookalike_info["is_impersonation"]
+        )
+        if is_mismatch:
+            signals["sender_domain_mismatch"] = True
+            reasons.extend(mismatch_reasons)
+
         # Signal 3: Structural Domain Features
         features = extract_domain_features(clean_url, domain)
         signals["structural_risk_score"] = features["risk_points"]
@@ -93,8 +76,9 @@ class DetectionOrchestrator:
         signals["ml_model_score"] = round(raw_ml_prob, 2)
 
         # Signal 5: Score Synthesis
+        total_penalty = lookalike_penalty + mismatch_penalty
         final_score, synth_reasons = cls._synthesize_risk_score(
-            clean_url, domain, raw_ml_prob, lookalike_penalty, features["risk_points"], lookalike_info["is_impersonation"]
+            clean_url, domain, raw_ml_prob, total_penalty, features["risk_points"], lookalike_info["is_impersonation"]
         )
         reasons.extend(synth_reasons)
         signals["trusted_domain"] = is_trusted_domain(domain)
@@ -117,6 +101,86 @@ class DetectionOrchestrator:
             "engine_version": "v3-orchestrated",
             "signals": signals,
         }
+
+    @staticmethod
+    def _evaluate_org_policy(organization, domain: str, url: str, clean_url: str) -> dict | None:
+        if not organization:
+            return None
+        policy = getattr(organization, "policy", None)
+        if not policy:
+            return None
+
+        if domain in (policy.custom_allowlist or []):
+            return {
+                "input_url": url,
+                "clean_url": clean_url,
+                "domain": domain,
+                "verdict": "safe",
+                "risk_level": "Safe",
+                "raw_phishing_probability": 0.01,
+                "phishing_probability": 0.01,
+                "legitimate_probability": 0.99,
+                "reasons": ["Domain allowlisted by organization security policy."],
+                "signals": {"org_policy_allowlist": True},
+            }
+        if domain in (policy.custom_blocklist or []):
+            return {
+                "input_url": url,
+                "clean_url": clean_url,
+                "domain": domain,
+                "verdict": "phishing",
+                "risk_level": "Critical Risk",
+                "raw_phishing_probability": 1.0,
+                "phishing_probability": 1.0,
+                "legitimate_probability": 0.0,
+                "reasons": ["Domain blocked by organization security policy."],
+                "signals": {"org_policy_blocklist": True},
+            }
+        return None
+
+    @staticmethod
+    def _evaluate_sender_mismatch(sender_domain: str | None, domain: str, is_lookalike: bool) -> tuple[int, list[str], bool]:
+        if not sender_domain:
+            return 0, [], False
+
+        clean_sender = sender_domain.split("@")[-1].strip().lower()
+        if not clean_sender or clean_sender == domain:
+            return 0, [], False
+
+        from .lookalike.indian_brands import INDIAN_BRANDS_CATALOG
+
+        # Check if sender and target domain belong to the same verified brand
+        for b_info in INDIAN_BRANDS_CATALOG.values():
+            sender_in_brand = any(clean_sender == vd or clean_sender.endswith("." + vd) for vd in b_info["domains"])
+            dest_in_brand = any(domain == vd or domain.endswith("." + vd) for vd in b_info["domains"])
+            if sender_in_brand and dest_in_brand:
+                return 0, [], False
+
+        sender_is_known_brand = False
+        for b_info in INDIAN_BRANDS_CATALOG.values():
+            if any(clean_sender == vd or clean_sender.endswith("." + vd) for vd in b_info["domains"]):
+                sender_is_known_brand = True
+                break
+
+        if sender_is_known_brand or is_trusted_domain(clean_sender):
+            return (
+                40,
+                [
+                    f"Sender domain ({clean_sender}) claims to be an established brand/institution, "
+                    f"but email link targets an external destination ({domain}). Potential spoofing attack."
+                ],
+                True,
+            )
+        if is_lookalike:
+            return (
+                30,
+                [f"Sender domain ({clean_sender}) mismatch with lookalike target domain ({domain})."],
+                True,
+            )
+
+        return 0, [], False
+
+
 
     @staticmethod
     def _evaluate_threat_intel(url: str, clean_url: str, domain: str, url_hash: str):

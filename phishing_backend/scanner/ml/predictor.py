@@ -9,8 +9,10 @@ logger = logging.getLogger(__name__)
 
 TRUSTED_DOMAINS = {
     "google.com",
+    "google.co.in",
     "github.com",
     "amazon.com",
+    "amazon.in",
     "wikipedia.org",
     "stackoverflow.com",
     "netflix.com",
@@ -24,6 +26,32 @@ TRUSTED_DOMAINS = {
     "x.com",
     "twitter.com",
     "reddit.com",
+    # Indian Banking & Financial Institutions
+    "hdfcbank.com",
+    "hdfc.com",
+    "onlinesbi.sbi",
+    "sbi.co.in",
+    "icicibank.com",
+    "axisbank.com",
+    "kotak.com",
+    "pnbindia.in",
+    "bankofbaroda.in",
+    # Indian Fintech & Payments
+    "paytm.com",
+    "phonepe.com",
+    "cred.club",
+    "razorpay.com",
+    "zerodha.com",
+    "groww.in",
+    "bharatpe.com",
+    # Indian Govt & Utilities
+    "npci.org.in",
+    "bhimupi.org.in",
+    "incometax.gov.in",
+    "uidai.gov.in",
+    "irctc.co.in",
+    "indiapost.gov.in",
+    "epfindia.gov.in",
 }
 
 SENSITIVE_KEYWORDS = {

@@ -50,6 +50,23 @@ def health_check_api(request):
     )
 
 
+def _resolve_org_and_user(request):
+    """Helper to extract organization and user instance from request."""
+    organization = getattr(request, "organization", None)
+    user_instance = None
+    if request.user and request.user.is_authenticated:
+        from django.contrib.auth.models import User
+        if isinstance(request.user, User):
+            user_instance = request.user
+            if not organization:
+                membership = user_instance.memberships.first()
+                if membership:
+                    organization = membership.organization
+        elif hasattr(request.user, "owner_user") and isinstance(request.user.owner_user, User):
+            user_instance = request.user.owner_user
+    return organization, user_instance
+
+
 @api_view(["POST"])
 @authentication_classes([PhishGuardDualAuthentication])
 @permission_classes([AllowAny])
@@ -69,20 +86,7 @@ def check_url_api(request):
     try:
         from .orchestrator import DetectionOrchestrator
 
-        # Resolve organization & real User instance for ForeignKey
-        organization = getattr(request, "organization", None)
-        user_instance = None
-        if request.user and request.user.is_authenticated:
-            from django.contrib.auth.models import User
-            if isinstance(request.user, User):
-                user_instance = request.user
-                if not organization:
-                    membership = user_instance.memberships.first()
-                    if membership:
-                        organization = membership.organization
-            elif hasattr(request.user, "owner_user") and isinstance(request.user.owner_user, User):
-                user_instance = request.user.owner_user
-
+        organization, user_instance = _resolve_org_and_user(request)
         result = DetectionOrchestrator.analyze(url, organization=organization)
         clean_url = result["clean_url"]
         domain = result["domain"]
@@ -129,3 +133,85 @@ def check_url_api(request):
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+@api_view(["POST"])
+@authentication_classes([PhishGuardDualAuthentication])
+@permission_classes([AllowAny])
+@throttle_classes([PlanBasedRateThrottle])
+def check_urls_batch_api(request):
+    """
+    Batch URL scanning endpoint for email clients (Gmail / Outlook Web) and security workflows.
+    Accepts up to 50 URLs and optional sender_domain/sender_email for spoofing detection.
+    """
+    urls = request.data.get("urls", [])
+    sender_domain = request.data.get("sender_domain") or request.data.get("sender_email")
+
+    if not urls or not isinstance(urls, list):
+        return Response(
+            {
+                "success": False,
+                "message": "'urls' field must be a non-empty list of URLs.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    urls = [str(u).strip() for u in urls if str(u).strip()][:50]
+    if not urls:
+        return Response(
+            {
+                "success": False,
+                "message": "No valid URLs provided in batch.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        from .orchestrator import DetectionOrchestrator
+
+        organization, user_instance = _resolve_org_and_user(request)
+        results = []
+        usage_logs_to_create = []
+
+        for url in urls:
+            res = DetectionOrchestrator.analyze(
+                url, organization=organization, sender_domain=sender_domain
+            )
+            clean_url = res["clean_url"]
+            domain = res["domain"]
+            url_hash = hashlib.sha256(clean_url.encode("utf-8")).hexdigest()
+
+            usage_logs_to_create.append(
+                UsageLog(
+                    organization=organization,
+                    user=user_instance,
+                    domain=domain,
+                    url_hash=url_hash,
+                    verdict=res["verdict"],
+                    risk_level=res["risk_level"],
+                    ip_address=request.META.get("REMOTE_ADDR"),
+                )
+            )
+            results.append(res)
+
+        if usage_logs_to_create:
+            UsageLog.objects.bulk_create(usage_logs_to_create)
+
+        return Response(
+            {
+                "success": True,
+                "count": len(results),
+                "sender_domain": sender_domain,
+                "results": results,
+            }
+        )
+
+    except Exception as e:
+        return Response(
+            {
+                "success": False,
+                "message": str(e),
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+

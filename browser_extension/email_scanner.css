@@ -1,0 +1,131 @@
+/* PhishGuard AI - Email Link Scanner Stylesheet */
+
+.phishguard-email-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding: 2px 6px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  border-radius: 4px;
+  position: relative;
+  cursor: help;
+  user-select: none;
+  vertical-align: middle;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+/* Threat / Phishing Badge */
+.phishguard-badge-threat {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #f87171;
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.2);
+  animation: phishguard-pulse 2s infinite ease-in-out;
+}
+
+@keyframes phishguard-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+/* Caution / Suspicious Badge */
+.phishguard-badge-warn {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+/* Safe Badge */
+.phishguard-badge-safe {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  font-size: 10px;
+  padding: 1px 4px;
+}
+
+/* Flagged Links Styling */
+a.phishguard-flagged-threat {
+  color: #dc2626 !important;
+  text-decoration: underline wavy #ef4444 !important;
+  background: rgba(254, 226, 226, 0.4);
+  padding: 1px 3px;
+  border-radius: 3px;
+}
+
+a.phishguard-flagged-warn {
+  color: #d97706 !important;
+  text-decoration: underline dotted #f59e0b !important;
+}
+
+a.phishguard-flagged-safe {
+  /* Keep standard styling with subtle verification */
+}
+
+/* Interactive Hover Tooltip */
+.phishguard-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  z-index: 99999;
+}
+
+.phishguard-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #0f172a transparent transparent transparent;
+}
+
+.phishguard-email-badge:hover .phishguard-tooltip {
+  display: block;
+}
+
+.phishguard-tooltip-header {
+  font-weight: 700;
+  font-size: 12px;
+  color: #ef4444;
+  margin-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 4px;
+}
+
+.phishguard-badge-warn .phishguard-tooltip-header {
+  color: #f59e0b;
+}
+
+.phishguard-tooltip-body p {
+  margin: 0 0 6px 0;
+  word-break: break-all;
+}
+
+.phishguard-tooltip-body ul {
+  margin: 0;
+  padding-left: 14px;
+}
+
+.phishguard-tooltip-body li {
+  margin-bottom: 3px;
+}

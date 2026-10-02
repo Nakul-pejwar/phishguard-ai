@@ -20,6 +20,8 @@ REQUIRED_FILES = [
     "background.js",
     "content.js",
     "content.css",
+    "email_scanner.js",
+    "email_scanner.css",
     "interstitial.html",
     "interstitial.js",
     "interstitial.css",

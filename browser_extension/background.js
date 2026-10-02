@@ -183,6 +183,57 @@ async function scanUrlWithBackend(targetUrl) {
 }
 
 /**
+ * Queries the backend batch scan API (Max 50 URLs per request)
+ */
+async function scanUrlsBatchWithBackend(urls, senderDomain = null) {
+  const auth = await getAuthConfig();
+  const endpoint = `${auth.apiBase}/api/check-urls/batch/`;
+
+  const headers = {
+    "Content-Type": "application/json"
+  };
+
+  if (auth.token) {
+    headers["Authorization"] = `Bearer ${auth.token}`;
+  } else if (auth.apiKey) {
+    headers["X-API-Key"] = auth.apiKey;
+  }
+
+  try {
+    const payload = { urls };
+    if (senderDomain) {
+      payload.sender_domain = senderDomain;
+    }
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        error: errData.error || `HTTP ${response.status}: Batch scan failed`
+      };
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      results: data.results || []
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: `Network error: Could not reach PhishGuard service at ${auth.apiBase}`
+    };
+  }
+}
+
+
+/**
  * Handles WebNavigation Pre-Flight Interception
  */
 chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
@@ -294,6 +345,61 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     })();
     return true; // Keep message channel open for async response
   }
+
+  if (request.action === "CHECK_URLS_BATCH") {
+    (async () => {
+      const urls = request.urls || [];
+      const senderDomain = request.senderDomain || request.senderEmail || null;
+      if (!urls.length) {
+        sendResponse({ success: true, results: {} });
+        return;
+      }
+
+      const resultsMap = {};
+      const urlsToFetch = [];
+
+      for (const rawUrl of urls) {
+        const domain = extractDomain(rawUrl);
+        if (!domain || isInternalUrl(rawUrl)) continue;
+
+        if (isAllowlisted(domain)) {
+          resultsMap[rawUrl] = {
+            verdict: "safe",
+            risk_level: "Safe",
+            phishing_probability: 0.01,
+            reasons: ["Verified domain in global cybersecurity trust catalog."]
+          };
+          continue;
+        }
+
+        const cached = await getCachedVerdict(domain);
+        if (cached) {
+          resultsMap[rawUrl] = cached;
+          continue;
+        }
+
+        urlsToFetch.push(rawUrl);
+      }
+
+      if (urlsToFetch.length > 0) {
+        // Chunk requests in batches of 50
+        const batchRes = await scanUrlsBatchWithBackend(urlsToFetch.slice(0, 50), senderDomain);
+        if (batchRes.success && batchRes.results) {
+          for (const item of batchRes.results) {
+            const domain = item.domain || extractDomain(item.input_url || item.clean_url);
+            resultsMap[item.input_url || item.clean_url] = item;
+            if (domain) {
+              await setCachedVerdict(domain, item);
+            }
+          }
+        }
+      }
+
+      sendResponse({ success: true, results: resultsMap });
+    })();
+    return true;
+  }
+
 
   if (request.action === "BYPASS_WARNING") {
     const tabId = sender.tab ? sender.tab.id : request.tabId;
