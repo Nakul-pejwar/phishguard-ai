@@ -8,11 +8,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const tabContents = document.querySelectorAll(".tab-content");
 
   const currentUrlEl = document.getElementById("currentUrl");
-  const scanBtn = document.getElementById("scanBtn");
+  const liveDot = document.getElementById("liveDot");
+  const tabStatusTitle = document.getElementById("tabStatusTitle");
+  const scanningState = document.getElementById("scanningState");
+  const resultCard = document.getElementById("resultCard");
+  const rescanBtn = document.getElementById("rescanBtn");
   const manualUrlInput = document.getElementById("manualUrlInput");
   const manualScanBtn = document.getElementById("manualScanBtn");
 
-  const resultCard = document.getElementById("resultCard");
   const verdictText = document.getElementById("verdictText");
   const riskText = document.getElementById("riskText");
   const scoreText = document.getElementById("scoreText");
@@ -147,48 +150,52 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // 6. Inspect Active Browser Tab
+  // 6. Inspect Active Browser Tab & Trigger Auto-Scan Immediately
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs && tabs[0] && tabs[0].url) {
       activeTabUrl = tabs[0].url;
       currentUrlEl.textContent = activeTabUrl;
 
-      // Auto-scan active tab
       if (activeTabUrl.startsWith("http")) {
-        performScan(activeTabUrl);
+        performAutoScan(activeTabUrl);
       } else {
-        currentUrlEl.textContent = "Internal browser page (Safe)";
+        showInternalPageInfo(activeTabUrl);
       }
     } else {
       currentUrlEl.textContent = "No active page detected";
+      showInternalPageInfo("chrome://newtab");
     }
   });
 
-  // 7. Manual & Quick Scan Triggers
-  scanBtn.addEventListener("click", () => {
-    if (activeTabUrl && activeTabUrl.startsWith("http")) {
-      performScan(activeTabUrl);
-    }
-  });
+  // 7. Manual & Rescan Triggers
+  if (rescanBtn) {
+    rescanBtn.addEventListener("click", () => {
+      if (activeTabUrl && activeTabUrl.startsWith("http")) {
+        performAutoScan(activeTabUrl);
+      }
+    });
+  }
 
   manualScanBtn.addEventListener("click", () => {
     const customUrl = manualUrlInput.value.trim();
     if (customUrl) {
-      performScan(customUrl);
+      currentUrlEl.textContent = customUrl;
+      performAutoScan(customUrl);
     }
   });
 
-  // 8. Core Scan Routine
-  function performScan(urlToScan) {
+  // 8. Core Auto-Scan Routine
+  function performAutoScan(urlToScan) {
     errorText.classList.add("hidden");
-    scanBtn.disabled = true;
-    scanBtn.querySelector(".btn-text").textContent = "SCANNING...";
+    if (scanningState) scanningState.classList.remove("hidden");
+    if (resultCard) resultCard.classList.add("hidden");
+    if (liveDot) liveDot.className = "pulse-dot active";
+    if (tabStatusTitle) tabStatusTitle.textContent = "SCANNING REAL-TIME THREATS...";
 
     chrome.runtime.sendMessage(
       { action: "CHECK_URL", url: urlToScan },
       (response) => {
-        scanBtn.disabled = false;
-        scanBtn.querySelector(".btn-text").textContent = "SCAN ACTIVE PAGE";
+        if (scanningState) scanningState.classList.add("hidden");
 
         if (!response || !response.success || !response.data) {
           showError((response && response.error) || "Scan failed. Please check network connection.");
@@ -200,14 +207,27 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
+  function showInternalPageInfo(url) {
+    if (scanningState) scanningState.classList.add("hidden");
+    if (liveDot) liveDot.className = "pulse-dot safe";
+    if (tabStatusTitle) tabStatusTitle.textContent = "INTERNAL BROWSER PAGE (SAFE)";
+    renderResult({
+      verdict: "SAFE",
+      risk_level: "Protected System Page",
+      phishing_probability: 0.0,
+      domain: "Browser Core",
+      reasons: ["Internal browser navigation is secure and isolated."]
+    });
+  }
+
   function renderResult(data) {
-    resultCard.classList.remove("hidden", "safe", "phishing", "suspicious");
+    if (resultCard) resultCard.classList.remove("hidden", "safe", "phishing", "suspicious");
 
     const verdict = (data.verdict || "SAFE").toUpperCase();
     const prob = typeof data.phishing_probability === "number" ? data.phishing_probability : 0;
     const pct = Math.round(prob * 100);
 
-    verdictText.textContent = verdict;
+    verdictText.textContent = verdict.includes("PHISH") ? "CRITICAL THREAT DETECTED" : verdict;
     riskText.textContent = data.risk_level || "Analysis Complete";
     scoreText.textContent = `${pct}%`;
     scoreBar.style.width = `${Math.max(5, pct)}%`;
@@ -215,16 +235,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (verdict.includes("PHISH") || pct >= 70) {
       resultCard.classList.add("phishing");
+      if (liveDot) liveDot.className = "pulse-dot threat";
+      if (tabStatusTitle) tabStatusTitle.textContent = "HIGH RISK DETECTED";
     } else if (verdict.includes("SUSPIC") || pct >= 40) {
       resultCard.classList.add("suspicious");
+      if (liveDot) liveDot.className = "pulse-dot warning";
+      if (tabStatusTitle) tabStatusTitle.textContent = "SUSPICIOUS DESTINATION";
     } else {
       resultCard.classList.add("safe");
+      if (liveDot) liveDot.className = "pulse-dot safe";
+      if (tabStatusTitle) tabStatusTitle.textContent = "VERIFIED SAFE DESTINATION";
     }
 
     reasonsBox.innerHTML = "";
     const reasons = data.reasons || ["Lexical and threat intelligence checks passed."];
     reasons.forEach((r) => {
       const item = document.createElement("div");
+      item.className = "reason-item";
       item.textContent = `• ${r}`;
       reasonsBox.appendChild(item);
     });

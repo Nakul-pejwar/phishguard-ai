@@ -172,12 +172,175 @@ async function scanUrlWithBackend(targetUrl) {
     const data = await response.json();
     return {
       success: true,
+const INDIAN_BFSI_BRANDS = [
+  { name: "HDFC Bank", tokens: ["hdfc", "hdfcbank"], legit: ["hdfcbank.com", "hdfc.com"] },
+  { name: "State Bank of India (SBI)", tokens: ["sbi", "onlinesbi", "statebank"], legit: ["onlinesbi.sbi", "sbi.co.in", "statebankofindia.com"] },
+  { name: "ICICI Bank", tokens: ["icici", "icicibank"], legit: ["icicibank.com", "icicidirect.com"] },
+  { name: "Axis Bank", tokens: ["axis", "axisbank"], legit: ["axisbank.com"] },
+  { name: "Kotak Mahindra Bank", tokens: ["kotak", "kotakbank"], legit: ["kotak.com"] },
+  { name: "Punjab National Bank", tokens: ["pnb", "pnbindia"], legit: ["pnbindia.in"] },
+  { name: "Bank of Baroda", tokens: ["bob", "bankofbaroda"], legit: ["bankofbaroda.in"] },
+  { name: "Paytm", tokens: ["paytm"], legit: ["paytm.com", "paytmbank.com"] },
+  { name: "PhonePe", tokens: ["phonepe"], legit: ["phonepe.com"] },
+  { name: "Cred", tokens: ["cred"], legit: ["cred.club"] },
+  { name: "Razorpay", tokens: ["razorpay"], legit: ["razorpay.com"] },
+  { name: "Zerodha", tokens: ["zerodha"], legit: ["zerodha.com"] },
+  { name: "Groww", tokens: ["groww"], legit: ["groww.in"] },
+  { name: "Income Tax Department", tokens: ["incometax", "incometaxindia"], legit: ["incometax.gov.in"] },
+  { name: "EPFO", tokens: ["epfo", "epfindia"], legit: ["epfindia.gov.in"] },
+  { name: "UIDAI Aadhaar", tokens: ["uidai", "myaadhaar"], legit: ["uidai.gov.in"] }
+];
+
+const SUSPICIOUS_TLDS = new Set([
+  "xyz", "top", "work", "click", "loan", "gq", "tk", "ml", "cf", "ga", "buzz", "rest", "fit", "live", "vip", "surf"
+]);
+
+const SENSITIVE_KEYWORDS = ["login", "verify", "update", "kyc", "pan", "aadhaar", "otp", "pin", "secure", "auth", "signin", "banking", "account"];
+
+/**
+ * Calculates Shannon entropy for a string
+ */
+function calculateEntropy(str) {
+  if (!str) return 0;
+  const len = str.length;
+  const frequencies = {};
+  for (let i = 0; i < len; i++) {
+    const c = str[i];
+    frequencies[c] = (frequencies[c] || 0) + 1;
+  }
+  let entropy = 0;
+  for (const c in frequencies) {
+    const p = frequencies[c] / len;
+    entropy -= p * Math.log2(p);
+  }
+  return entropy;
+}
+
+/**
+ * On-Device Heuristic Fallback Classifier
+ */
+function evaluateLocalHeuristics(urlStr, domain) {
+  const reasons = [];
+  let threatScore = 0.05;
+  const lowerUrl = (urlStr || "").toLowerCase();
+  const lowerDomain = (domain || "").toLowerCase();
+  const tld = lowerDomain.split(".").pop();
+
+  // 1. Check BFSI brand lookalike
+  let targetBrand = null;
+  for (const brand of INDIAN_BFSI_BRANDS) {
+    const isLegit = brand.legit.some(l => lowerDomain === l || lowerDomain.endsWith("." + l));
+    if (isLegit) continue;
+
+    const brandMatched = brand.tokens.some(token => lowerDomain.includes(token));
+    if (brandMatched) {
+      targetBrand = brand.name;
+      threatScore += 0.65;
+      reasons.push(`Targeting brand lookalike / typosquat: ${brand.name}.`);
+      break;
+    }
+  }
+
+  // 2. Suspicious TLD check
+  if (SUSPICIOUS_TLDS.has(tld)) {
+    threatScore += 0.20;
+    reasons.push(`Suspicious top-level domain (.${tld}) associated with threat activity.`);
+  }
+
+  // 3. Sensitive authentication / banking keywords in URL
+  const foundKeywords = SENSITIVE_KEYWORDS.filter(k => lowerUrl.includes(k));
+  if (foundKeywords.length > 0) {
+    threatScore += Math.min(0.20, foundKeywords.length * 0.08);
+    reasons.push(`Sensitive authentication keywords detected: ${foundKeywords.slice(0, 3).join(", ")}.`);
+  }
+
+  // 4. Shannon Entropy
+  const domainEntropy = calculateEntropy(lowerDomain.split(".")[0]);
+  if (domainEntropy > 3.8) {
+    threatScore += 0.15;
+    reasons.push(`High Shannon entropy (${domainEntropy.toFixed(2)}) indicating randomized domain name.`);
+  }
+
+  // 5. Raw IP address check
+  if (/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/.test(lowerDomain)) {
+    threatScore += 0.35;
+    reasons.push("Host URL uses raw IP address instead of registered domain.");
+  }
+
+  threatScore = Math.min(0.99, Math.max(0.01, threatScore));
+
+  let verdict = "safe";
+  let riskLevel = "Safe";
+  if (threatScore >= 0.70) {
+    verdict = "phishing";
+    riskLevel = "Critical Risk";
+  } else if (threatScore >= 0.40) {
+    verdict = "suspicious";
+    riskLevel = "Suspicious";
+  }
+
+  if (reasons.length === 0) {
+    reasons.push("No immediate brand impersonation or threat feed hits.");
+  }
+
+  return {
+    verdict,
+    risk_level: riskLevel,
+    phishing_probability: threatScore,
+    legitimate_probability: 1 - threatScore,
+    domain: lowerDomain,
+    reasons,
+    is_offline_fallback: true
+  };
+}
+
+/**
+ * Queries the backend scan API with instant on-device heuristic fallback
+ */
+async function scanUrlWithBackend(targetUrl) {
+  const domain = extractDomain(targetUrl);
+  const auth = await getAuthConfig();
+  const endpoint = `${auth.apiBase}/api/check-url/`;
+
+  const headers = {
+    "Content-Type": "application/json"
+  };
+
+  if (auth.token) {
+    headers["Authorization"] = `Bearer ${auth.token}`;
+  } else if (auth.apiKey) {
+    headers["X-API-Key"] = auth.apiKey;
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ url: targetUrl }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      // If server returns error, use on-device heuristics
+      const fallback = evaluateLocalHeuristics(targetUrl, domain);
+      return { success: true, data: fallback };
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
       data
     };
   } catch (err) {
+    // Network unreachable or timeout -> Fall back to on-device heuristic analysis
+    const fallback = evaluateLocalHeuristics(targetUrl, domain);
     return {
-      success: false,
-      error: `Network error: Could not reach PhishGuard service at ${auth.apiBase}`
+      success: true,
+      data: fallback
     };
   }
 }
@@ -225,9 +388,11 @@ async function scanUrlsBatchWithBackend(urls, senderDomain = null) {
       results: data.results || []
     };
   } catch (err) {
+    // Return heuristic results for batch
+    const results = urls.map(u => evaluateLocalHeuristics(u, extractDomain(u)));
     return {
-      success: false,
-      error: `Network error: Could not reach PhishGuard service at ${auth.apiBase}`
+      success: true,
+      results
     };
   }
 }

@@ -45,33 +45,29 @@
       <button id="tabSettings" class="tab-btn" data-tab="view-settings">Settings</button>
     </nav>
 
-    <!-- TAB 1: SHIELD (MAIN SCANNER) -->
+    <!-- TAB 1: SHIELD (AUTOMATIC REAL-TIME SCANNER) -->
     <div id="view-shield" class="tab-content active">
       <!-- Active Tab Status Pill -->
       <div class="active-tab-box">
         <div class="active-tab-header">
-          <span class="pulse-dot"></span>
-          <span class="tab-title">ACTIVE TAB DIAGNOSIS</span>
+          <span class="pulse-dot" id="liveDot"></span>
+          <span class="tab-title" id="tabStatusTitle">LIVE TAB PROTECTION</span>
         </div>
-        <p id="currentUrl" class="url">Analyzing current page...</p>
+        <p id="currentUrl" class="url">Detecting active page...</p>
       </div>
 
-      <!-- Quick Action Buttons -->
-      <div class="action-row">
-        <button id="scanBtn" class="scan-btn">
-          <span class="btn-text">SCAN ACTIVE PAGE</span>
-          <span class="btn-icon">⚡</span>
-          <div class="btn-glow"></div>
-        </button>
+      <!-- Scanning Radar Loader State (Visible while scanning) -->
+      <div id="scanningState" class="scanning-state">
+        <div class="radar-spinner">
+          <div class="radar-circle"></div>
+          <div class="radar-circle-outer"></div>
+          <div class="radar-core">🛡️</div>
+        </div>
+        <h3 class="scanning-title">Scanning Active Page...</h3>
+        <p class="scanning-subtitle">Analyzing URL entropy, BFSI lookalikes & threat feeds</p>
       </div>
 
-      <!-- Manual URL Input Toggle -->
-      <div class="manual-input-wrap">
-        <input type="text" id="manualUrlInput" placeholder="Paste link to scan (https://...)" />
-        <button id="manualScanBtn">Scan</button>
-      </div>
-
-      <!-- Result Card -->
+      <!-- Result Card (Revealed automatically once verdict is ready) -->
       <section id="resultCard" class="result-card hidden">
         <div class="status-header">
           <div id="statusIcon" class="status-icon">
@@ -106,8 +102,17 @@
 
         <div id="reasonsBox" class="reasons"></div>
 
-        <button id="reportPhishingBtn" class="report-link">🚩 Report False Positive / Phishing</button>
+        <div class="result-actions">
+          <button id="rescanBtn" class="btn-rescan">🔄 Rescan Page</button>
+          <button id="reportPhishingBtn" class="report-link">🚩 Report Issue</button>
+        </div>
       </section>
+
+      <!-- Manual URL Input (Secondary / Optional) -->
+      <div class="manual-input-wrap">
+        <input type="text" id="manualUrlInput" placeholder="Scan custom URL (https://...)" />
+        <button id="manualScanBtn">Scan</button>
+      </div>
     </div>
 
     <!-- TAB 2: ACCOUNT & QUOTA -->

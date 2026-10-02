@@ -176,19 +176,19 @@ body {
   margin-bottom: 4px;
 }
 
-.pulse-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent-cyan);
-  box-shadow: 0 0 8px var(--accent-cyan);
-  animation: pulseDot 1.5s infinite;
+.pulse-dot.threat {
+  background: var(--accent-red);
+  box-shadow: 0 0 10px var(--accent-red);
 }
 
-@keyframes pulseDot {
-  0% { transform: scale(0.9); opacity: 0.8; }
-  50% { transform: scale(1.3); opacity: 1; }
-  100% { transform: scale(0.9); opacity: 0.8; }
+.pulse-dot.warning {
+  background: var(--accent-yellow);
+  box-shadow: 0 0 10px var(--accent-yellow);
+}
+
+.pulse-dot.safe {
+  background: var(--accent-green);
+  box-shadow: 0 0 10px var(--accent-green);
 }
 
 .tab-title {
@@ -207,29 +207,112 @@ body {
   text-overflow: ellipsis;
 }
 
-/* Buttons */
-.scan-btn {
-  position: relative;
-  width: 100%;
-  background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 119, 255, 0.3));
-  border: 1px solid var(--border-glow);
-  color: var(--text-main);
-  padding: 12px;
+/* Scanning Radar State */
+.scanning-state {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  margin: 4px 0;
+}
+
+.scanning-state.hidden {
+  display: none !important;
+}
+
+.radar-spinner {
+  position: relative;
+  width: 60px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  transition: all 0.2s;
-  box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);
 }
 
-.scan-btn:hover {
-  background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(0, 119, 255, 0.45));
-  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+.radar-circle {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--accent-cyan);
+  opacity: 0.8;
+  animation: radarWave 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+.radar-circle-outer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--accent-blue);
+  opacity: 0.8;
+  animation: radarWave 2s cubic-bezier(0, 0.2, 0.8, 1) infinite 0.7s;
+}
+
+.radar-core {
+  font-size: 24px;
+  z-index: 2;
+  filter: drop-shadow(0 0 8px var(--accent-cyan));
+}
+
+@keyframes radarWave {
+  0% {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.scanning-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.scanning-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Result Actions */
+.result-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  gap: 8px;
+}
+
+.btn-rescan {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-rescan:hover {
+  background: rgba(0, 212, 255, 0.15);
+  border-color: var(--accent-cyan);
+}
+
+.reason-item {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-bottom: 4px;
 }
 
 .manual-input-wrap {
