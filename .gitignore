@@ -43,6 +43,16 @@ phishing_model/dataset/
 *.joblib
 !phishing_backend/scanner/ml/phishing_url_text_model_v2.joblib
 
-# Browser extension temp files
+# Testing and Coverage
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+
+# Build and distribution artifacts
+dist/
+build/
+*.egg-info/
 *.zip
-*.crx
+*.crx

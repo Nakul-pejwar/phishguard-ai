@@ -127,7 +127,7 @@ def build_package(target_name: str, manifest_filename: str, is_firefox: bool = F
 
 def package_all(api_url: str = None):
     DIST_DIR.mkdir(parents=True, exist_ok=True)
-    
+
     # Read API URL from env or argument if provided
     if not api_url:
         api_url = os.environ.get("PHISHGUARD_API_URL") or os.environ.get("API_URL")

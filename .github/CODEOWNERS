@@ -1,0 +1,20 @@
+# ==============================================================================
+# PhishGuard AI - Code Owners
+# Defines teams and individuals responsible for reviewing pull requests
+# ==============================================================================
+
+# Global fallback owner
+* @Nakul-pejwar
+
+# Deployment, Infrastructure & Server configurations
+/deploy/ @Nakul-pejwar
+/Dockerfile @Nakul-pejwar
+/docker-compose.yml @Nakul-pejwar
+/Caddyfile @Nakul-pejwar
+/scripts/safe_sync.sh @Nakul-pejwar
+/scripts/package_extension.py @Nakul-pejwar
+
+# Core Dependencies & Machine Learning Models
+/requirements.txt @Nakul-pejwar
+/phishing_model/ @Nakul-pejwar
+/phishing_backend/scanner/ml/*.joblib @Nakul-pejwar
