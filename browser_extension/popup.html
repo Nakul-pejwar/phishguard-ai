@@ -6,10 +6,8 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Neural Network Canvas Background -->
+  <!-- Neural Canvas Background -->
   <canvas id="neuralCanvas"></canvas>
-
-  <!-- Scan Line Effect -->
   <div class="scan-line"></div>
 
   <main class="popup">
@@ -28,154 +26,165 @@
           <path d="M16 24L21 29L32 18" stroke="#00d4ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" 
                 class="check-path"/>
           <circle cx="24" cy="14" r="2" fill="#00d4ff" class="node-pulse"/>
-          <circle cx="14" cy="22" r="1.5" fill="#0077ff" opacity="0.7"/>
-          <circle cx="34" cy="22" r="1.5" fill="#0077ff" opacity="0.7"/>
-          <circle cx="18" cy="34" r="1.5" fill="#0077ff" opacity="0.5"/>
-          <circle cx="30" cy="34" r="1.5" fill="#0077ff" opacity="0.5"/>
         </svg>
       </div>
       <div class="header-text">
-        <h1>PhishGuard <span class="ai-badge">AI</span></h1>
+        <h1>PhishGuard <span class="ai-badge">AI v2</span></h1>
         <p class="subtitle">
-          <span class="typing-text">Neural Threat Detection</span>
+          <span class="typing-text">Real-Time Threat Shield</span>
           <span class="cursor-blink">|</span>
         </p>
       </div>
+      <div id="planBadgeHeader" class="plan-badge-header">FREE</div>
     </section>
 
-    <!-- Neural Divider -->
-    <div class="neural-divider">
-      <span class="node"></span>
-      <span class="line"></span>
-      <span class="node active"></span>
-      <span class="line"></span>
-      <span class="node"></span>
+    <!-- Nav Tabs -->
+    <nav class="nav-tabs">
+      <button id="tabShield" class="tab-btn active" data-tab="view-shield">Shield</button>
+      <button id="tabAccount" class="tab-btn" data-tab="view-account">Account</button>
+      <button id="tabSettings" class="tab-btn" data-tab="view-settings">Settings</button>
+    </nav>
+
+    <!-- TAB 1: SHIELD (MAIN SCANNER) -->
+    <div id="view-shield" class="tab-content active">
+      <!-- Active Tab Status Pill -->
+      <div class="active-tab-box">
+        <div class="active-tab-header">
+          <span class="pulse-dot"></span>
+          <span class="tab-title">ACTIVE TAB DIAGNOSIS</span>
+        </div>
+        <p id="currentUrl" class="url">Analyzing current page...</p>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="action-row">
+        <button id="scanBtn" class="scan-btn">
+          <span class="btn-text">SCAN ACTIVE PAGE</span>
+          <span class="btn-icon">⚡</span>
+          <div class="btn-glow"></div>
+        </button>
+      </div>
+
+      <!-- Manual URL Input Toggle -->
+      <div class="manual-input-wrap">
+        <input type="text" id="manualUrlInput" placeholder="Paste link to scan (https://...)" />
+        <button id="manualScanBtn">Scan</button>
+      </div>
+
+      <!-- Result Card -->
+      <section id="resultCard" class="result-card hidden">
+        <div class="status-header">
+          <div id="statusIcon" class="status-icon">
+            <svg viewBox="0 0 48 48" fill="none" class="status-svg">
+              <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+              <circle cx="24" cy="24" r="12" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3" class="status-ring"/>
+              <circle cx="24" cy="24" r="4" fill="currentColor" class="status-core"/>
+            </svg>
+          </div>
+          <h2 id="verdictText" class="verdict">Result</h2>
+          <p id="riskText" class="risk-level">Risk level</p>
+        </div>
+
+        <div class="score-wrap">
+          <div class="score-top">
+            <span class="score-label">THREAT PROBABILITY</span>
+            <strong id="scoreText" class="score-value">0%</strong>
+          </div>
+          <div class="bar-container">
+            <div class="bar">
+              <div id="scoreBar" class="bar-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="details">
+          <div class="detail-row">
+            <span class="detail-label">DOMAIN</span>
+            <span id="domainText" class="detail-value">-</span>
+          </div>
+        </div>
+
+        <div id="reasonsBox" class="reasons"></div>
+
+        <button id="reportPhishingBtn" class="report-link">🚩 Report False Positive / Phishing</button>
+      </section>
     </div>
 
-    <!-- URL Box -->
-    <section class="url-box">
-      <div class="url-label">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <circle cx="6" cy="6" r="2.5" stroke="#00d4ff" stroke-width="1"/>
-          <path d="M6 1V2.5M6 9.5V11M1 6H2.5M9.5 6H11" stroke="#00d4ff" stroke-width="1" stroke-linecap="round"/>
-        </svg>
-        <span>TARGET URL</span>
-      </div>
-      <p id="currentUrl" class="url">Loading...</p>
-      <div class="url-glow"></div>
-    </section>
-
-    <!-- Scan Button -->
-    <button id="scanBtn" class="scan-btn">
-      <span class="btn-text">INITIATE SCAN</span>
-      <span class="btn-icon">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M8 1C4.13 1 1 4.13 1 8s3.13 7 7 7 7-3.13 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M8 4v4l3 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="8" cy="8" r="1" fill="currentColor"/>
-        </svg>
-      </span>
-      <div class="btn-glow"></div>
-      <div class="btn-particles"></div>
-    </button>
-
-    <!-- Result Card -->
-    <section id="resultCard" class="result-card hidden">
-      <!-- Status Header -->
-      <div class="status-header">
-        <div id="statusIcon" class="status-icon">
-          <svg viewBox="0 0 48 48" fill="none" class="status-svg">
-            <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="2" opacity="0.3"/>
-            <circle cx="24" cy="24" r="12" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3" class="status-ring"/>
-            <circle cx="24" cy="24" r="4" fill="currentColor" class="status-core"/>
-          </svg>
-        </div>
-        <h2 id="verdictText" class="verdict">Result</h2>
-        <p id="riskText" class="risk-level">Risk level</p>
-      </div>
-
-      <!-- Neural Divider -->
-      <div class="neural-divider small">
-        <span class="node"></span>
-        <span class="line"></span>
-        <span class="node active"></span>
-        <span class="line"></span>
-        <span class="node"></span>
-      </div>
-
-      <!-- Score Meter -->
-      <div class="score-wrap">
-        <div class="score-top">
-          <span class="score-label">
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-              <path d="M5 1L6 4H9L6.5 6L7.5 9L5 7.2L2.5 9L3.5 6L1 4H4L5 1Z" fill="#00d4ff" opacity="0.7"/>
-            </svg>
-            THREAT PROBABILITY
-          </span>
-          <strong id="scoreText" class="score-value">0%</strong>
-        </div>
-        <div class="bar-container">
-          <div class="bar">
-            <div id="scoreBar" class="bar-fill"></div>
-          </div>
-          <div class="bar-glow"></div>
-          <!-- Neural nodes along bar -->
-          <div class="bar-nodes">
-            <span class="bnode" style="left:0%"></span>
-            <span class="bnode" style="left:25%"></span>
-            <span class="bnode" style="left:50%"></span>
-            <span class="bnode" style="left:75%"></span>
-            <span class="bnode" style="left:100%"></span>
+    <!-- TAB 2: ACCOUNT & QUOTA -->
+    <div id="view-account" class="tab-content">
+      <div id="accountLoggedIn" class="account-card hidden">
+        <div class="user-profile">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div class="user-details">
+            <h3 id="userName">User</h3>
+            <p id="userEmail" class="email-muted">user@example.com</p>
+            <span id="userPlanBadge" class="plan-pill">Pro Plan</span>
           </div>
         </div>
-      </div>
 
-      <!-- Neural Divider -->
-      <div class="neural-divider small">
-        <span class="node"></span>
-        <span class="line"></span>
-        <span class="node active"></span>
-        <span class="line"></span>
-        <span class="node"></span>
-      </div>
-
-      <!-- Details -->
-      <div class="details">
-        <div class="detail-row">
-          <span class="detail-label">
-            <span class="label-icon">&#9670;</span> DOMAIN
-          </span>
-          <span id="domainText" class="detail-value">-</span>
+        <!-- Quota Progress Bar -->
+        <div class="quota-box">
+          <div class="quota-header">
+            <span>Daily Scan Quota</span>
+            <span id="quotaText">12 / 20 used</span>
+          </div>
+          <div class="quota-bar-wrap">
+            <div id="quotaFill" class="quota-fill" style="width: 60%;"></div>
+          </div>
         </div>
-        <div class="detail-row">
-          <span class="detail-label">
-            <span class="label-icon">&#9670;</span> RAW ML SCORE
-          </span>
-          <span id="rawScoreText" class="detail-value">-</span>
-        </div>
+
+        <button id="logoutBtn" class="btn-secondary">Log Out</button>
       </div>
 
-      <!-- Reasons -->
-      <div id="reasonsBox" class="reasons"></div>
-    </section>
+      <div id="accountLoggedOut" class="account-card">
+        <h3>Connect PhishGuard Cloud</h3>
+        <p class="account-desc">Sign in to unlock unlimited scans, threat feed updates, and org policies.</p>
+        <form id="loginForm" class="auth-form">
+          <input type="email" id="loginEmail" placeholder="Email address" required />
+          <input type="password" id="loginPassword" placeholder="Password" required />
+          <button type="submit" id="submitLoginBtn" class="btn-primary">Sign In</button>
+          <p id="loginError" class="auth-error hidden"></p>
+        </form>
+      </div>
+    </div>
 
-    <!-- Error -->
+    <!-- TAB 3: SETTINGS -->
+    <div id="view-settings" class="tab-content">
+      <div class="settings-card">
+        <div class="setting-item">
+          <div>
+            <strong>Real-time Protection</strong>
+            <p class="setting-desc">Block phishing before web pages render.</p>
+          </div>
+          <input type="checkbox" id="toggleRealtime" checked />
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <strong>Credential Shield</strong>
+            <p class="setting-desc">In-page warnings on password & OTP fields.</p>
+          </div>
+          <input type="checkbox" id="toggleCredentials" checked />
+        </div>
+
+        <div class="setting-item-stack">
+          <label for="customApiBase"><strong>API Endpoint</strong></label>
+          <input type="text" id="customApiBase" value="http://127.0.0.1:8000" />
+          <button id="saveSettingsBtn" class="btn-secondary small">Save Endpoint</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Message -->
     <p id="errorText" class="error hidden">
       <span class="error-icon">&#9888;</span>
       <span id="errorMsg"></span>
     </p>
 
     <!-- Footer -->
-    <div class="footer">
-      <div class="footer-nodes">
-        <span class="fnode"></span>
-        <span class="fnode"></span>
-        <span class="fnode active"></span>
-        <span class="fnode"></span>
-        <span class="fnode"></span>
-      </div>
-      <p>Powered by Neural Network Analysis</p>
-    </div>
+    <footer class="footer">
+      <p>PhishGuard SaaS Engine v3 • Multi-Signal AI Shield</p>
+    </footer>
   </main>
 
   <script src="popup.js"></script>

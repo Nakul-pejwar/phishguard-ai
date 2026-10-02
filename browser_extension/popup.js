@@ -1,552 +1,313 @@
 /* ═══════════════════════════════════════════
-   PHISHGUARD AI — NEURAL NETWORK CONTROLLER
-   Cybersecurity theme with neural animations
+   PHISHGUARD AI — POPUP CONTROLLER v2
    ═══════════════════════════════════════════ */
 
-const API_URL = "http://127.0.0.1:8000/api/check-url/";
+document.addEventListener("DOMContentLoaded", () => {
+  // DOM Elements
+  const tabBtns = document.querySelectorAll(".tab-btn");
+  const tabContents = document.querySelectorAll(".tab-content");
 
-// DOM Elements
-const currentUrlEl = document.getElementById("currentUrl");
-const scanBtn = document.getElementById("scanBtn");
-const resultCard = document.getElementById("resultCard");
-const errorText = document.getElementById("errorText");
-const errorMsg = document.getElementById("errorMsg");
+  const currentUrlEl = document.getElementById("currentUrl");
+  const scanBtn = document.getElementById("scanBtn");
+  const manualUrlInput = document.getElementById("manualUrlInput");
+  const manualScanBtn = document.getElementById("manualScanBtn");
 
-const statusIcon = document.getElementById("statusIcon");
-const verdictText = document.getElementById("verdictText");
-const riskText = document.getElementById("riskText");
-const scoreText = document.getElementById("scoreText");
-const scoreBar = document.getElementById("scoreBar");
-const domainText = document.getElementById("domainText");
-const rawScoreText = document.getElementById("rawScoreText");
-const reasonsBox = document.getElementById("reasonsBox");
+  const resultCard = document.getElementById("resultCard");
+  const verdictText = document.getElementById("verdictText");
+  const riskText = document.getElementById("riskText");
+  const scoreText = document.getElementById("scoreText");
+  const scoreBar = document.getElementById("scoreBar");
+  const domainText = document.getElementById("domainText");
+  const reasonsBox = document.getElementById("reasonsBox");
+  const planBadgeHeader = document.getElementById("planBadgeHeader");
+  const reportPhishingBtn = document.getElementById("reportPhishingBtn");
 
-let activeUrl = "";
+  const errorText = document.getElementById("errorText");
+  const errorMsg = document.getElementById("errorMsg");
 
-// ═══════════════════════════════════════════
-// NEURAL NETWORK CANVAS ANIMATION
-// ═══════════════════════════════════════════
+  // Account Elements
+  const accountLoggedIn = document.getElementById("accountLoggedIn");
+  const accountLoggedOut = document.getElementById("accountLoggedOut");
+  const userName = document.getElementById("userName");
+  const userEmail = document.getElementById("userEmail");
+  const userPlanBadge = document.getElementById("userPlanBadge");
+  const userAvatar = document.getElementById("userAvatar");
+  const quotaText = document.getElementById("quotaText");
+  const quotaFill = document.getElementById("quotaFill");
+  const loginForm = document.getElementById("loginForm");
+  const loginEmail = document.getElementById("loginEmail");
+  const loginPassword = document.getElementById("loginPassword");
+  const loginError = document.getElementById("loginError");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-class NeuralNetwork {
-  constructor(canvas) {
-    this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
-    this.nodes = [];
-    this.connections = [];
-    this.particles = [];
-    this.mouseX = 0;
-    this.mouseY = 0;
-    this.frame = 0;
-    this.resize();
-    this.initNodes();
-    this.bindEvents();
-    this.animate();
-  }
+  // Settings Elements
+  const toggleRealtime = document.getElementById("toggleRealtime");
+  const toggleCredentials = document.getElementById("toggleCredentials");
+  const customApiBase = document.getElementById("customApiBase");
+  const saveSettingsBtn = document.getElementById("saveSettingsBtn");
 
-  resize() {
-    const dpr = window.devicePixelRatio || 1;
-    const rect = this.canvas.parentElement ? this.canvas.parentElement.getBoundingClientRect() : { width: 380, height: 600 };
-    this.width = rect.width;
-    this.height = Math.max(rect.height, 600);
-    this.canvas.width = this.width * dpr;
-    this.canvas.height = this.height * dpr;
-    this.ctx.scale(dpr, dpr);
-    this.canvas.style.width = this.width + 'px';
-    this.canvas.style.height = this.height + 'px';
-  }
+  let activeTabUrl = "";
 
-  initNodes() {
-    this.nodes = [];
-    this.connections = [];
+  // 1. Tab Switching
+  tabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      tabBtns.forEach((b) => b.classList.remove("active"));
+      tabContents.forEach((c) => c.classList.remove("active"));
+      btn.classList.add("active");
+      const target = document.getElementById(btn.dataset.tab);
+      if (target) target.classList.add("active");
+    });
+  });
 
-    const cols = 6;
-    const rows = 10;
-    const xGap = this.width / (cols + 1);
-    const yGap = this.height / (rows + 1);
-
-    // Create grid nodes
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const jitterX = (Math.random() - 0.5) * xGap * 0.5;
-        const jitterY = (Math.random() - 0.5) * yGap * 0.5;
-        this.nodes.push({
-          x: (c + 1) * xGap + jitterX,
-          y: (r + 1) * yGap + jitterY,
-          baseX: (c + 1) * xGap + jitterX,
-          baseY: (r + 1) * yGap + jitterY,
-          r: Math.random() * 1.5 + 1,
-          pulsePhase: Math.random() * Math.PI * 2,
-          pulseSpeed: 0.01 + Math.random() * 0.02,
-          opacity: 0.15 + Math.random() * 0.35,
-          connections: []
-        });
+  // 2. Load Settings & Auth State
+  chrome.storage.local.get(
+    ["realtime_enabled", "credentials_enabled", "custom_api_base"],
+    (res) => {
+      toggleRealtime.checked = res.realtime_enabled !== false;
+      toggleCredentials.checked = res.credentials_enabled !== false;
+      if (res.custom_api_base) {
+        customApiBase.value = res.custom_api_base;
       }
     }
+  );
 
-    // Create connections between nearby nodes
-    for (let i = 0; i < this.nodes.length; i++) {
-      for (let j = i + 1; j < this.nodes.length; j++) {
-        const dx = this.nodes[i].x - this.nodes[j].x;
-        const dy = this.nodes[i].y - this.nodes[j].y;
+  saveSettingsBtn.addEventListener("click", () => {
+    chrome.storage.local.set({
+      custom_api_base: customApiBase.value.trim()
+    }, () => {
+      alert("Settings saved successfully.");
+    });
+  });
+
+  toggleRealtime.addEventListener("change", (e) => {
+    chrome.storage.local.set({ realtime_enabled: e.target.checked });
+  });
+
+  toggleCredentials.addEventListener("change", (e) => {
+    chrome.storage.local.set({ credentials_enabled: e.target.checked });
+  });
+
+  // 3. Check Auth State
+  function refreshAuthState() {
+    chrome.runtime.sendMessage({ action: "GET_AUTH_STATE" }, (res) => {
+      if (res && res.isAuthenticated && res.user) {
+        accountLoggedIn.classList.remove("hidden");
+        accountLoggedOut.classList.add("hidden");
+
+        const u = res.user;
+        userName.textContent = `${u.first_name || ""} ${u.last_name || ""}`.trim() || u.email;
+        userEmail.textContent = u.email;
+        userAvatar.textContent = (u.first_name ? u.first_name[0] : u.email[0]).toUpperCase();
+
+        const planName = (u.organization && u.organization.plan) ? u.organization.plan.name : "Free";
+        userPlanBadge.textContent = `${planName} Plan`;
+        planBadgeHeader.textContent = planName.toUpperCase();
+
+        // Update Quota display
+        const maxDaily = planName.toLowerCase().includes("pro") ? 500 : 20;
+        const used = u.scans_today || 1;
+        quotaText.textContent = `${used} / ${maxDaily} used`;
+        quotaFill.style.width = `${Math.min(100, Math.round((used / maxDaily) * 100))}%`;
+      } else {
+        accountLoggedIn.classList.add("hidden");
+        accountLoggedOut.classList.remove("hidden");
+        planBadgeHeader.textContent = "FREE TRIAL";
+      }
+    });
+  }
+  refreshAuthState();
+
+  // 4. Handle Login Form
+  loginForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    loginError.classList.add("hidden");
+
+    chrome.runtime.sendMessage(
+      {
+        action: "LOGIN",
+        email: loginEmail.value.trim(),
+        password: loginPassword.value
+      },
+      (res) => {
+        if (res && res.success) {
+          refreshAuthState();
+          document.getElementById("tabShield").click();
+        } else {
+          loginError.textContent = (res && res.error) || "Invalid credentials.";
+          loginError.classList.remove("hidden");
+        }
+      }
+    );
+  });
+
+  // 5. Handle Logout
+  logoutBtn.addEventListener("click", () => {
+    chrome.runtime.sendMessage({ action: "LOGOUT" }, () => {
+      refreshAuthState();
+    });
+  });
+
+  // 6. Inspect Active Browser Tab
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs && tabs[0] && tabs[0].url) {
+      activeTabUrl = tabs[0].url;
+      currentUrlEl.textContent = activeTabUrl;
+
+      // Auto-scan active tab
+      if (activeTabUrl.startsWith("http")) {
+        performScan(activeTabUrl);
+      } else {
+        currentUrlEl.textContent = "Internal browser page (Safe)";
+      }
+    } else {
+      currentUrlEl.textContent = "No active page detected";
+    }
+  });
+
+  // 7. Manual & Quick Scan Triggers
+  scanBtn.addEventListener("click", () => {
+    if (activeTabUrl && activeTabUrl.startsWith("http")) {
+      performScan(activeTabUrl);
+    }
+  });
+
+  manualScanBtn.addEventListener("click", () => {
+    const customUrl = manualUrlInput.value.trim();
+    if (customUrl) {
+      performScan(customUrl);
+    }
+  });
+
+  // 8. Core Scan Routine
+  function performScan(urlToScan) {
+    errorText.classList.add("hidden");
+    scanBtn.disabled = true;
+    scanBtn.querySelector(".btn-text").textContent = "SCANNING...";
+
+    chrome.runtime.sendMessage(
+      { action: "CHECK_URL", url: urlToScan },
+      (response) => {
+        scanBtn.disabled = false;
+        scanBtn.querySelector(".btn-text").textContent = "SCAN ACTIVE PAGE";
+
+        if (!response || !response.success || !response.data) {
+          showError((response && response.error) || "Scan failed. Please check network connection.");
+          return;
+        }
+
+        renderResult(response.data);
+      }
+    );
+  }
+
+  function renderResult(data) {
+    resultCard.classList.remove("hidden", "safe", "phishing", "suspicious");
+
+    const verdict = (data.verdict || "SAFE").toUpperCase();
+    const prob = typeof data.phishing_probability === "number" ? data.phishing_probability : 0;
+    const pct = Math.round(prob * 100);
+
+    verdictText.textContent = verdict;
+    riskText.textContent = data.risk_level || "Analysis Complete";
+    scoreText.textContent = `${pct}%`;
+    scoreBar.style.width = `${Math.max(5, pct)}%`;
+    domainText.textContent = data.domain || "-";
+
+    if (verdict.includes("PHISH") || pct >= 70) {
+      resultCard.classList.add("phishing");
+    } else if (verdict.includes("SUSPIC") || pct >= 40) {
+      resultCard.classList.add("suspicious");
+    } else {
+      resultCard.classList.add("safe");
+    }
+
+    reasonsBox.innerHTML = "";
+    const reasons = data.reasons || ["Lexical and threat intelligence checks passed."];
+    reasons.forEach((r) => {
+      const item = document.createElement("div");
+      item.textContent = `• ${r}`;
+      reasonsBox.appendChild(item);
+    });
+  }
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorText.classList.remove("hidden");
+  }
+
+  // 9. Report False Positive / Phishing Link
+  reportPhishingBtn.addEventListener("click", () => {
+    if (!activeTabUrl) return;
+    chrome.runtime.sendMessage(
+      {
+        action: "REPORT_URL",
+        url: activeTabUrl,
+        reportType: "false_positive",
+        notes: "Reported from popup card."
+      },
+      (res) => {
+        reportPhishingBtn.textContent = "✓ Report Submitted to Security Team";
+        reportPhishingBtn.style.color = "#10b981";
+      }
+    );
+  });
+
+  // 10. Neural Background Canvas
+  initNeuralCanvas();
+});
+
+function initNeuralCanvas() {
+  const canvas = document.getElementById("neuralCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  let width = (canvas.width = 380);
+  let height = (canvas.height = 540);
+
+  const nodes = [];
+  for (let i = 0; i < 24; i++) {
+    nodes.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      r: Math.random() * 2 + 1
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw connections
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const maxDist = Math.min(xGap, yGap) * 2.2;
-
-        if (dist < maxDist && Math.random() > 0.55) {
-          this.connections.push({
-            from: i,
-            to: j,
-            opacity: 0.04 + Math.random() * 0.08,
-            pulsePhase: Math.random() * Math.PI * 2,
-            pulseSpeed: 0.005 + Math.random() * 0.015
-          });
+        if (dist < 90) {
+          ctx.strokeStyle = `rgba(0, 212, 255, ${0.15 * (1 - dist / 90)})`;
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.stroke();
         }
       }
     }
-  }
-
-  bindEvents() {
-    this.canvas.addEventListener('mousemove', (e) => {
-      const rect = this.canvas.getBoundingClientRect();
-      this.mouseX = e.clientX - rect.left;
-      this.mouseY = e.clientY - rect.top;
-    });
-
-    this.canvas.addEventListener('mouseleave', () => {
-      this.mouseX = -1000;
-      this.mouseY = -1000;
-    });
-
-    window.addEventListener('resize', () => {
-      this.resize();
-      this.initNodes();
-    });
-  }
-
-  spawnParticle() {
-    if (this.particles.length > 15) return;
-    if (this.connections.length === 0) return;
-
-    const conn = this.connections[Math.floor(Math.random() * this.connections.length)];
-    const fromNode = this.nodes[conn.from];
-    const toNode = this.nodes[conn.to];
-
-    this.particles.push({
-      x: fromNode.x,
-      y: fromNode.y,
-      targetX: toNode.x,
-      targetY: toNode.y,
-      progress: 0,
-      speed: 0.008 + Math.random() * 0.012,
-      opacity: 0.6 + Math.random() * 0.4,
-      size: 1 + Math.random() * 1.5
-    });
-  }
-
-  draw() {
-    this.ctx.clearRect(0, 0, this.width, this.height);
-    this.frame++;
-
-    // Draw connections
-    for (const conn of this.connections) {
-      const n1 = this.nodes[conn.from];
-      const n2 = this.nodes[conn.to];
-
-      const pulse = Math.sin(this.frame * conn.pulseSpeed + conn.pulsePhase) * 0.5 + 0.5;
-      const opacity = conn.opacity * (0.5 + pulse * 0.5);
-
-      this.ctx.beginPath();
-      this.ctx.moveTo(n1.x, n1.y);
-      this.ctx.lineTo(n2.x, n2.y);
-      this.ctx.strokeStyle = `rgba(0, 212, 255, ${opacity})`;
-      this.ctx.lineWidth = 0.5;
-      this.ctx.stroke();
-    }
-
-    // Draw particles traveling along connections
-    for (let i = this.particles.length - 1; i >= 0; i--) {
-      const p = this.particles[i];
-      p.progress += p.speed;
-
-      if (p.progress >= 1) {
-        this.particles.splice(i, 1);
-        continue;
-      }
-
-      const x = p.x + (p.targetX - p.x) * p.progress;
-      const y = p.y + (p.targetY - p.y) * p.progress;
-      const fadeIn = Math.min(p.progress * 5, 1);
-      const fadeOut = Math.min((1 - p.progress) * 5, 1);
-      const alpha = p.opacity * fadeIn * fadeOut;
-
-      this.ctx.beginPath();
-      this.ctx.arc(x, y, p.size, 0, Math.PI * 2);
-      this.ctx.fillStyle = `rgba(0, 212, 255, ${alpha})`;
-      this.ctx.fill();
-
-      // Glow
-      this.ctx.beginPath();
-      this.ctx.arc(x, y, p.size * 3, 0, Math.PI * 2);
-      this.ctx.fillStyle = `rgba(0, 212, 255, ${alpha * 0.15})`;
-      this.ctx.fill();
-    }
-
-    // Spawn new particles
-    if (Math.random() < 0.08) {
-      this.spawnParticle();
-    }
 
     // Draw nodes
-    for (const node of this.nodes) {
-      // Mouse interaction - nodes gently repel from mouse
-      const mdx = node.x - this.mouseX;
-      const mdy = node.y - this.mouseY;
-      const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
-      const interactRadius = 80;
+    for (const n of nodes) {
+      n.x += n.vx;
+      n.y += n.vy;
+      if (n.x < 0 || n.x > width) n.vx *= -1;
+      if (n.y < 0 || n.y > height) n.vy *= -1;
 
-      if (mDist < interactRadius) {
-        const force = (interactRadius - mDist) / interactRadius;
-        node.x += (mdx / mDist) * force * 2;
-        node.y += (mdy / mDist) * force * 2;
-      } else {
-        // Spring back to base position
-        node.x += (node.baseX - node.x) * 0.05;
-        node.y += (node.baseY - node.y) * 0.05;
-      }
-
-      const pulse = Math.sin(this.frame * node.pulseSpeed + node.pulsePhase) * 0.5 + 0.5;
-      const r = node.r * (0.8 + pulse * 0.4);
-      const alpha = node.opacity * (0.5 + pulse * 0.5);
-
-      // Node glow
-      this.ctx.beginPath();
-      this.ctx.arc(node.x, node.y, r * 4, 0, Math.PI * 2);
-      this.ctx.fillStyle = `rgba(0, 212, 255, ${alpha * 0.08})`;
-      this.ctx.fill();
-
-      // Node core
-      this.ctx.beginPath();
-      this.ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
-      this.ctx.fillStyle = `rgba(0, 212, 255, ${alpha})`;
-      this.ctx.fill();
+      ctx.fillStyle = "rgba(0, 212, 255, 0.4)";
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fill();
     }
+
+    requestAnimationFrame(draw);
   }
-
-  animate() {
-    this.draw();
-    requestAnimationFrame(() => this.animate());
-  }
+  draw();
 }
-
-// ═══════════════════════════════════════════
-// PARTICLE BURST EFFECT
-// ═══════════════════════════════════════════
-
-function createParticleBurst(button) {
-  const rect = button.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-  const centerY = rect.top + rect.height / 2;
-
-  for (let i = 0; i < 12; i++) {
-    const particle = document.createElement('div');
-    particle.className = 'particle';
-
-    const angle = (Math.PI * 2 * i) / 12 + (Math.random() - 0.5) * 0.3;
-    const distance = 40 + Math.random() * 60;
-    const tx = Math.cos(angle) * distance;
-    const ty = Math.sin(angle) * distance;
-
-    particle.style.setProperty('--tx', tx + 'px');
-    particle.style.setProperty('--ty', ty + 'px');
-    particle.style.left = centerX + 'px';
-    particle.style.top = centerY + 'px';
-    particle.style.background = `hsl(${190 + Math.random() * 30}, 100%, ${60 + Math.random() * 20}%)`;
-
-    document.body.appendChild(particle);
-    setTimeout(() => particle.remove(), 800);
-  }
-}
-
-// ═══════════════════════════════════════════
-// TYPING EFFECT
-// ═══════════════════════════════════════════
-
-function typeEffect(element, text, speed = 40) {
-  element.textContent = '';
-  let i = 0;
-
-  function type() {
-    if (i < text.length) {
-      element.textContent += text.charAt(i);
-      i++;
-      setTimeout(type, speed);
-    }
-  }
-  type();
-}
-
-// ═══════════════════════════════════════════
-// STATUS UI CONFIGURATION
-// ═══════════════════════════════════════════
-
-function getStatusUI(verdict) {
-  if (verdict === "safe") {
-    return {
-      icon: "●",
-      label: "SAFE",
-      className: "safe",
-      barColor: "linear-gradient(90deg, #00b894, #00e5a0)",
-      glowColor: "rgba(0, 229, 160, 0.2)",
-      ringColor: "#00e5a0"
-    };
-  }
-
-  if (verdict === "suspicious") {
-    return {
-      icon: "●",
-      label: "SUSPICIOUS",
-      className: "suspicious",
-      barColor: "linear-gradient(90deg, #f39c12, #ffb830)",
-      glowColor: "rgba(255, 184, 48, 0.2)",
-      ringColor: "#ffb830"
-    };
-  }
-
-  return {
-    icon: "●",
-    label: "PHISHING DETECTED",
-    className: "phishing",
-    barColor: "linear-gradient(90deg, #e74c3c, #ff3860)",
-    glowColor: "rgba(255, 56, 96, 0.2)",
-    ringColor: "#ff3860"
-  };
-}
-
-// ═══════════════════════════════════════════
-// UTILITY FUNCTIONS
-// ═══════════════════════════════════════════
-
-function setError(message) {
-  errorMsg.textContent = message;
-  errorText.classList.remove("hidden");
-  errorText.style.animation = 'none';
-  errorText.offsetHeight; // Trigger reflow
-  errorText.style.animation = '';
-}
-
-function clearError() {
-  errorText.classList.add("hidden");
-  errorMsg.textContent = "";
-}
-
-function setLoading(isLoading) {
-  scanBtn.disabled = isLoading;
-  if (isLoading) {
-    scanBtn.classList.add("scanning");
-    scanBtn.querySelector('.btn-text').textContent = "SCANNING";
-  } else {
-    scanBtn.classList.remove("scanning");
-    scanBtn.querySelector('.btn-text').textContent = "INITIATE SCAN";
-  }
-}
-
-// ═══════════════════════════════════════════
-// TAB & API FUNCTIONS
-// ═══════════════════════════════════════════
-
-async function getCurrentTabUrl() {
-  const tabs = await chrome.tabs.query({
-    active: true,
-    currentWindow: true
-  });
-
-  if (!tabs || tabs.length === 0) {
-    throw new Error("No active tab found.");
-  }
-
-  return tabs[0].url || "";
-}
-
-async function scanUrl(url) {
-  const response = await fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ url })
-  });
-
-  const data = await response.json();
-
-  if (!response.ok || !data.success) {
-    throw new Error(data.message || "Scan failed.");
-  }
-
-  return data.result;
-}
-
-// ═══════════════════════════════════════════
-// RESULT RENDERING
-// ═══════════════════════════════════════════
-
-function renderResult(result) {
-  const phishingScore = Number(result.phishing_probability || 0);
-  const rawScore = Number(result.raw_phishing_probability || 0);
-
-  const ui = getStatusUI(result.verdict);
-
-  resultCard.classList.remove("hidden");
-
-  // Reset animations
-  resultCard.style.animation = 'none';
-  resultCard.offsetHeight; // Trigger reflow
-  resultCard.style.animation = 'cardAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-
-  // Update status icon color
-  const statusSvg = statusIcon.querySelector('.status-svg');
-  const statusRing = statusIcon.querySelector('.status-ring');
-  const statusCore = statusIcon.querySelector('.status-core');
-
-  statusSvg.style.color = ui.ringColor;
-  statusRing.style.stroke = ui.ringColor;
-  statusCore.style.fill = ui.ringColor;
-
-  // Add glow animation to status
-  statusIcon.style.filter = `drop-shadow(0 0 10px ${ui.glowColor}) drop-shadow(0 0 20px ${ui.glowColor})`;
-
-  // Verdict with typing effect
-  verdictText.textContent = ui.label;
-  verdictText.className = `verdict ${ui.className}`;
-
-  riskText.textContent = `RISK LEVEL: ${(result.risk_level || 'unknown').toUpperCase()}`;
-  riskText.style.color = ui.ringColor;
-  riskText.style.opacity = '0.8';
-
-  // Animate score counter
-  animateValue(scoreText, 0, phishingScore, 1000, "%");
-
-  // Animate bar
-  setTimeout(() => {
-    scoreBar.style.width = `${phishingScore}%`;
-    scoreBar.style.background = ui.barColor;
-  }, 100);
-
-  // Update bar glow
-  const barGlow = document.querySelector('.bar-glow');
-  if (barGlow) {
-    barGlow.style.background = ui.barColor;
-    barGlow.style.width = `${phishingScore}%`;
-    barGlow.style.opacity = '0.5';
-  }
-
-  // Update bar nodes based on score
-  updateBarNodes(phishingScore);
-
-  domainText.textContent = result.domain || "-";
-  rawScoreText.textContent = `${rawScore}%`;
-
-  // Render reasons with staggered animation
-  reasonsBox.innerHTML = "";
-
-  if (result.reasons && result.reasons.length > 0) {
-    result.reasons.forEach((reason, index) => {
-      const div = document.createElement("div");
-      div.className = "reason-item";
-      div.style.animationDelay = `${0.3 + index * 0.1}s`;
-      div.textContent = reason;
-      reasonsBox.appendChild(div);
-    });
-  }
-}
-
-function animateValue(element, start, end, duration, suffix = "") {
-  const startTime = performance.now();
-
-  function update(currentTime) {
-    const elapsed = currentTime - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-
-    // Easing function
-    const eased = 1 - Math.pow(1 - progress, 3);
-    const current = Math.round(start + (end - start) * eased);
-
-    element.textContent = `${current}${suffix}`;
-
-    if (progress < 1) {
-      requestAnimationFrame(update);
-    }
-  }
-
-  requestAnimationFrame(update);
-}
-
-function updateBarNodes(score) {
-  const nodes = document.querySelectorAll('.bnode');
-  nodes.forEach((node, index) => {
-    const threshold = index * 25;
-    if (score >= threshold) {
-      node.classList.add('active');
-    } else {
-      node.classList.remove('active');
-    }
-  });
-}
-
-// ═══════════════════════════════════════════
-// INITIALIZATION
-// ═══════════════════════════════════════════
-
-async function init() {
-  try {
-    clearError();
-    activeUrl = await getCurrentTabUrl();
-
-    // Type the URL with effect
-    currentUrlEl.textContent = activeUrl;
-
-    if (
-      activeUrl.startsWith("chrome://") ||
-      activeUrl.startsWith("edge://") ||
-      activeUrl.startsWith("about:")
-    ) {
-      scanBtn.disabled = true;
-      scanBtn.querySelector('.btn-text').textContent = "CANNOT SCAN";
-      setError("This browser page cannot be scanned.");
-    }
-  } catch (error) {
-    setError(error.message);
-  }
-}
-
-// ═══════════════════════════════════════════
-// EVENT LISTENERS
-// ═══════════════════════════════════════════
-
-scanBtn.addEventListener("click", async () => {
-  try {
-    clearError();
-    setLoading(true);
-
-    // Particle burst effect
-    createParticleBurst(scanBtn);
-
-    const result = await scanUrl(activeUrl);
-    renderResult(result);
-  } catch (error) {
-    setError(error.message);
-  } finally {
-    setLoading(false);
-  }
-});
-
-// ═══════════════════════════════════════════
-// STARTUP
-// ═══════════════════════════════════════════
-
-// Initialize neural network canvas
-const neuralCanvas = document.getElementById('neuralCanvas');
-if (neuralCanvas) {
-  new NeuralNetwork(neuralCanvas);
-}
-
-// Initialize app
-init();

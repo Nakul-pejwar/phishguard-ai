@@ -1,17 +1,44 @@
 {
   "manifest_version": 3,
-  "name": "PhishGuard AI",
-  "version": "1.0.0",
-  "description": "AI-powered phishing URL detection extension.",
+  "name": "PhishGuard AI — Phishing & Fraud Shield",
+  "version": "2.0.0",
+  "description": "Real-time AI-powered protection against phishing URLs, brand lookalikes, and credential theft.",
   "permissions": [
     "activeTab",
-    "tabs"
+    "storage",
+    "webNavigation",
+    "alarms",
+    "notifications"
   ],
   "host_permissions": [
     "http://127.0.0.1:8000/*",
     "http://localhost:8000/*",
     "https://api.phishguard.ai/*",
-    "https://*.phishguard.ai/*"
+    "https://*.phishguard.ai/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "interstitial.html",
+        "interstitial.js",
+        "interstitial.css",
+        "style.css",
+        "icons/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
   ],
   "icons": {
     "16": "icons/icon16.png",

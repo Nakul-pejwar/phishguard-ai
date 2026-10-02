@@ -7,8 +7,8 @@ import django
 
 django.setup()
 
-from scanner.ml.predictor import predict_phishing_url
-from scanner.orchestrator import DetectionOrchestrator
+from scanner.ml.predictor import predict_phishing_url  # noqa: E402
+from scanner.orchestrator import DetectionOrchestrator  # noqa: E402
 
 BENCHMARK_DATASET = [
     # Legitimate Indian & Global Domains (Expected: Safe / Low Risk)

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhishGuard AI — Dangerous Site Blocked</title>
+  <link rel="stylesheet" href="interstitial.css" />
+</head>
+<body>
+  <div class="background-mesh"></div>
+  <div class="scanlines"></div>
+
+  <main class="warning-container">
+    <header class="warning-header">
+      <div class="alert-badge">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>SECURITY SHIELD ACTIVE</span>
+      </div>
+
+      <div class="shield-pulse">
+        <div class="shield-icon">
+          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M32 4L8 14V30C8 46 18.2 57.6 32 62C45.8 57.6 56 46 56 30V14L32 4Z" 
+                  stroke="#EF4444" stroke-width="3.5" fill="rgba(239, 68, 68, 0.12)" class="shield-svg-path"/>
+            <path d="M32 18V36M32 44V46" stroke="#EF4444" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <h1 class="warning-title">Deceptive Phishing Website Blocked</h1>
+      <p class="warning-subtitle">
+        PhishGuard AI detected indicators of brand impersonation, fraudulent credential harvesting, or malware.
+      </p>
+    </header>
+
+    <section class="threat-card">
+      <div class="threat-row">
+        <span class="label">TARGET DOMAIN:</span>
+        <span id="targetDomain" class="value domain-highlight">unknown-domain.xyz</span>
+      </div>
+      <div class="threat-row">
+        <span class="label">SAFETY VERDICT:</span>
+        <span id="targetVerdict" class="badge-verdict">CRITICAL PHISHING RISK</span>
+      </div>
+      <div class="threat-row">
+        <span class="label">THREAT PROBABILITY:</span>
+        <div class="threat-meter">
+          <div class="meter-bar"><div id="meterFill" class="meter-fill" style="width: 95%;"></div></div>
+          <span id="threatScore" class="score-text">95%</span>
+        </div>
+      </div>
+
+      <div class="reasons-section">
+        <div class="reasons-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>DETECTED THREAT SIGNALS:</span>
+        </div>
+        <ul id="reasonsList" class="reasons-list">
+          <li>Unauthorized domain impersonating an Indian banking institution.</li>
+          <li>High-risk suspicious top-level domain (.xyz).</li>
+        </ul>
+      </div>
+
+      <div class="url-details-collapsible">
+        <span class="url-label">Full Target URL:</span>
+        <code id="fullUrl" class="url-code">https://...</code>
+      </div>
+    </section>
+
+    <footer class="action-footer">
+      <button id="goBackBtn" class="btn btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <span>Return to Safety (Recommended)</span>
+      </button>
+
+      <div class="secondary-actions">
+        <button id="proceedAnywayBtn" class="btn-link">Proceed anyway (Unsafe)</button>
+        <span class="sep">•</span>
+        <button id="reportFalsePositiveBtn" class="btn-link">Report False Positive</button>
+      </div>
+    </footer>
+  </main>
+
+  <script src="interstitial.js"></script>
+</body>
+</html>
