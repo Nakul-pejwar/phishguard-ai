@@ -95,6 +95,16 @@ class Subscription(models.Model):
         (STATUS_TRIALING, "Trialing"),
     ]
 
+    GATEWAY_RAZORPAY = "razorpay"
+    GATEWAY_STRIPE = "stripe"
+    GATEWAY_MANUAL = "manual"
+
+    GATEWAY_CHOICES = [
+        (GATEWAY_RAZORPAY, "Razorpay"),
+        (GATEWAY_STRIPE, "Stripe"),
+        (GATEWAY_MANUAL, "Manual / Custom"),
+    ]
+
     organization = models.OneToOneField(
         Organization,
         on_delete=models.CASCADE,
@@ -106,7 +116,11 @@ class Subscription(models.Model):
         related_name="subscriptions",
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_ACTIVE)
+    gateway = models.CharField(max_length=20, choices=GATEWAY_CHOICES, default=GATEWAY_RAZORPAY)
     razorpay_subscription_id = models.CharField(max_length=255, blank=True)
+    razorpay_customer_id = models.CharField(max_length=255, blank=True)
+    stripe_subscription_id = models.CharField(max_length=255, blank=True)
+    stripe_customer_id = models.CharField(max_length=255, blank=True)
     current_period_end = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -117,6 +131,56 @@ class Subscription(models.Model):
 
     def __str__(self):
         return f"{self.organization.name} - {self.plan.name} ({self.status})"
+
+
+class Invoice(models.Model):
+    STATUS_PAID = "paid"
+    STATUS_PENDING = "pending"
+    STATUS_FAILED = "failed"
+    STATUS_REFUNDED = "refunded"
+
+    STATUS_CHOICES = [
+        (STATUS_PAID, "Paid"),
+        (STATUS_PENDING, "Pending"),
+        (STATUS_FAILED, "Failed"),
+        (STATUS_REFUNDED, "Refunded"),
+    ]
+
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="invoices",
+    )
+    invoice_number = models.CharField(max_length=50, unique=True, db_index=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=10, default="INR")
+    gateway = models.CharField(max_length=20, default="razorpay")
+    gateway_invoice_id = models.CharField(max_length=255, blank=True)
+    gateway_payment_id = models.CharField(max_length=255, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PAID)
+    gstin = models.CharField(max_length=20, blank=True, help_text="Indian GST Identification Number")
+    pdf_url = models.URLField(max_length=1024, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Invoice {self.invoice_number} - {self.organization.name} ({self.currency} {self.amount})"
+
+
+class PaymentEvent(models.Model):
+    """Tracks gateway webhook events for idempotency to prevent duplicate processing."""
+    event_id = models.CharField(max_length=255, unique=True, db_index=True)
+    gateway = models.CharField(max_length=20)
+    event_type = models.CharField(max_length=100)
+    payload = models.JSONField(default=dict)
+    processed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"[{self.gateway}] {self.event_type} ({self.event_id})"
 
 
 class APIKey(models.Model):
