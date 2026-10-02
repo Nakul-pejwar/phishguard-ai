@@ -137,41 +137,6 @@ async function getAuthConfig() {
   });
 }
 
-/**
- * Queries the backend scan API
- */
-async function scanUrlWithBackend(targetUrl) {
-  const auth = await getAuthConfig();
-  const endpoint = `${auth.apiBase}/api/check-url/`;
-
-  const headers = {
-    "Content-Type": "application/json"
-  };
-
-  if (auth.token) {
-    headers["Authorization"] = `Bearer ${auth.token}`;
-  } else if (auth.apiKey) {
-    headers["X-API-Key"] = auth.apiKey;
-  }
-
-  try {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ url: targetUrl })
-    });
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        error: errData.error || `HTTP ${response.status}: Scan failed`
-      };
-    }
-
-    const data = await response.json();
-    return {
-      success: true,
 const INDIAN_BFSI_BRANDS = [
   { name: "HDFC Bank", tokens: ["hdfc", "hdfcbank"], legit: ["hdfcbank.com", "hdfc.com"] },
   { name: "State Bank of India (SBI)", tokens: ["sbi", "onlinesbi", "statebank"], legit: ["onlinesbi.sbi", "sbi.co.in", "statebankofindia.com"] },
