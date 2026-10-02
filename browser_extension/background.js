@@ -4,7 +4,7 @@
  * dynamic badge status, and interstitial blocking.
  */
 
-const DEFAULT_API_BASE = "http://127.0.0.1:8000";
+const DEFAULT_API_BASE = "https://phishguard.vitalsnvectors.in";
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 Hour
 const BYPASS_TTL_MS = 15 * 60 * 1000; // 15 Minutes
 
